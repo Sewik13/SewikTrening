@@ -320,3 +320,43 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .workout-actions,.plan-actions{padding:11px 18px;}
   .dates-list{padding:0 18px 18px;}
 }
+
+/* ── IMPORT / EKSPORT ──────────────────────────────────── */
+.data-mgmt-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--soft);
+  font-size: 12px;
+  font-family: var(--font);
+  padding: 9px 16px;
+  cursor: pointer;
+  width: 100%;
+  transition: background .12s, color .12s;
+  -webkit-appearance: none;
+}
+.data-mgmt-btn:active { background: var(--surf); color: var(--text); }
+
+.import-zone {
+  position: relative;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-md);
+  padding: 20px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .13s, background .13s;
+  margin-bottom: 4px;
+}
+.import-zone:hover { border-color: var(--accent); background: rgba(10,132,255,.05); }
+.import-zone__label { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.import-zone__sub   { font-size: 11px; color: var(--muted); }
+
+.import-status {
+  font-size: 12px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.import-status--ok  { background: rgba(48,209,88,.12);  color: var(--green); border: 1px solid rgba(48,209,88,.25); }
+.import-status--err { background: rgba(255,69,58,.12);  color: var(--red);   border: 1px solid rgba(255,69,58,.25); }

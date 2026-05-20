@@ -4,6 +4,11 @@
  */
 'use strict';
 
+/* ── WBUDOWANE DANE HISTORYCZNE ─────────────────────────── */
+const IMPORT_DATA = {"plans":{"UBW":{"workouts":{"2026-04-30":{"exercises":[{"name":"Wyciskanie sztangi na ławce płaskiej","superSet":false,"sets":[{"reps":"10","weight":"65","note":""},{"reps":"7","weight":"65","note":""},{"reps":"7","weight":"60","note":""}]},{"name":"Podciąganie","superSet":false,"sets":[{"reps":"4","weight":"","note":""},{"reps":"3","weight":"","note":""},{"reps":"2","weight":"","note":""}]},{"name":"Military press","superSet":false,"sets":[{"reps":"10","weight":"35","note":""},{"reps":"7","weight":"35","note":""},{"reps":"7","weight":"30","note":""}]},{"name":"Wiosłowanie na wyciągu (seated row)","superSet":false,"sets":[{"reps":"10","weight":"70","note":""},{"reps":"10","weight":"70","note":""},{"reps":"9","weight":"63","note":""}]},{"name":"Rozpiętki na bramie","superSet":false,"sets":[{"reps":"15","weight":"73","note":""},{"reps":"11","weight":"79","note":""},{"reps":"9","weight":"73","note":""}]},{"name":"Triceps na wyciągu","superSet":false,"sets":[{"reps":"10","weight":"29.3","note":""},{"reps":"7","weight":"31.5","note":""},{"reps":"10","weight":"29.3","note":""}]},{"name":"Uginanie ramion na modlitewniku","superSet":false,"sets":[{"reps":"8","weight":"57","note":""},{"reps":"9","weight":"50","note":""},{"reps":"6","weight":"50","note":""},{"reps":"4","weight":"29","note":""}]}]},"2026-05-05":{"exercises":[{"name":"Wyciskanie sztangi na ławce płaskiej","superSet":false,"sets":[{"reps":"9","weight":"70","note":""},{"reps":"7","weight":"70","note":""},{"reps":"6","weight":"65","note":""}]},{"name":"Podciąganie","superSet":false,"sets":[{"reps":"4","weight":"","note":""},{"reps":"3","weight":"","note":""},{"reps":"3","weight":"","note":""}]},{"name":"Military press","superSet":false,"sets":[{"reps":"10","weight":"35","note":""},{"reps":"8","weight":"35","note":""},{"reps":"7","weight":"30","note":""}]},{"name":"Wiosłowanie wąskim chwytem","superSet":false,"sets":[{"reps":"12","weight":"86","note":""},{"reps":"10","weight":"73","note":""},{"reps":"10","weight":"66","note":""}]},{"name":"Rozpiętki na bramie","superSet":false,"sets":[{"reps":"14","weight":"79","note":""},{"reps":"7","weight":"86","note":""},{"reps":"6","weight":"79","note":""},{"reps":"5","weight":"59","note":""}]},{"name":"Triceps na wyciągu","superSet":false,"sets":[{"reps":"10","weight":"32","note":""},{"reps":"12","weight":"27","note":""},{"reps":"9","weight":"27","note":""},{"reps":"5","weight":"18","note":""}]},{"name":"Uginanie ramion na modlitewniku","superSet":false,"sets":[{"reps":"4","weight":"63","note":""},{"reps":"6","weight":"50","note":""},{"reps":"4","weight":"50","note":""},{"reps":"4","weight":"29","note":""}]}]},"2026-05-13":{"exercises":[{"name":"Wyciskanie sztangi na ławce płaskiej","superSet":false,"sets":[{"reps":"7","weight":"75","note":""},{"reps":"5","weight":"75","note":""},{"reps":"6","weight":"70","note":""}]},{"name":"Podciąganie","superSet":false,"sets":[{"reps":"4","weight":"","note":""},{"reps":"4","weight":"","note":""},{"reps":"3","weight":"","note":""}]},{"name":"Military press","superSet":false,"sets":[{"reps":"9","weight":"40","note":""},{"reps":"5","weight":"40","note":""},{"reps":"6","weight":"35","note":""}]},{"name":"Wiosłowanie na wyciągu (seated row)","superSet":false,"sets":[{"reps":"9","weight":"84","note":""},{"reps":"9","weight":"77","note":""},{"reps":"7","weight":"70","note":""}]},{"name":"Rozpiętki na bramie","superSet":false,"sets":[{"reps":"15","weight":"27.2","note":""},{"reps":"7","weight":"31.8","note":""},{"reps":"7","weight":"27.2","note":""},{"reps":"8","weight":"18.2","note":""}]},{"name":"Triceps na wyciągu","superSet":false,"sets":[{"reps":"12","weight":"27.2","note":""},{"reps":"10","weight":"24.9","note":""},{"reps":"8","weight":"22.7","note":""},{"reps":"6","weight":"13.6","note":""}]},{"name":"Uginanie ramion na modlitewniku","superSet":false,"sets":[{"reps":"8","weight":"63","note":""},{"reps":"8","weight":"57","note":""},{"reps":"5","weight":"50","note":""},{"reps":"3","weight":"29","note":""}]}]},"2026-05-18":{"exercises":[{"name":"Wyciskanie sztangi na ławce płaskiej","superSet":false,"sets":[{"reps":"6","weight":"75","note":""},{"reps":"8","weight":"70","note":""},{"reps":"5","weight":"70","note":""}]},{"name":"Podciąganie","superSet":false,"sets":[{"reps":"4","weight":"","note":""},{"reps":"4","weight":"","note":""},{"reps":"3","weight":"","note":""}]},{"name":"Military press","superSet":false,"sets":[{"reps":"7","weight":"40","note":""},{"reps":"8","weight":"35","note":""},{"reps":"9","weight":"35","note":""}]},{"name":"Wiosłowanie na wyciągu (seated row)","superSet":false,"sets":[{"reps":"12","weight":"70","note":""},{"reps":"12","weight":"70","note":""},{"reps":"8","weight":"77","note":""}]},{"name":"Rozpiętki na bramie","superSet":false,"sets":[{"reps":"13","weight":"26","note":""},{"reps":"9","weight":"26","note":""},{"reps":"8","weight":"26","note":""},{"reps":"14","weight":"13.6","note":""}]},{"name":"Triceps na wyciągu","superSet":false,"sets":[{"reps":"15","weight":"27","note":""},{"reps":"10","weight":"32","note":""},{"reps":"10","weight":"32","note":""},{"reps":"15","weight":"14","note":""}]},{"name":"Uginanie ramion na modlitewniku","superSet":false,"sets":[{"reps":"9","weight":"63","note":""},{"reps":"8","weight":"50","note":""},{"reps":"8","weight":"43","note":""},{"reps":"10","weight":"23","note":""}]}]}}},"LBW":{"workouts":{"2026-04-01":{"exercises":[{"name":"Wykroki chodzone","superSet":false,"sets":[{"reps":"12","weight":"40","note":""},{"reps":"12","weight":"44","note":""},{"reps":"12","weight":"40","note":""}]},{"name":"Hip thrusty","superSet":false,"sets":[{"reps":"10","weight":"110","note":""},{"reps":"9","weight":"120","note":""},{"reps":"10","weight":"120","note":""}]},{"name":"Ball leg curl jednonóż","superSet":false,"sets":[{"reps":"12","weight":"","note":""},{"reps":"12","weight":"","note":""}]},{"name":"Suwnica izometryczna obunoż","superSet":false,"sets":[{"reps":"12","weight":"177","note":""},{"reps":"12","weight":"188","note":""},{"reps":"12","weight":"165","note":""}]},{"name":"Uginanie nóg na maszynie","superSet":false,"sets":[{"reps":"12","weight":"63","note":""},{"reps":"12","weight":"63","note":""},{"reps":"11","weight":"63","note":""}]},{"name":"Seated calf raise","superSet":false,"sets":[{"reps":"12","weight":"60","note":""},{"reps":"12","weight":"70","note":""},{"reps":"10","weight":"80","note":""}]}]},"2026-04-23":{"exercises":[{"name":"Wykroki chodzone","superSet":false,"sets":[{"reps":"12","weight":"36","note":""},{"reps":"12","weight":"36","note":""},{"reps":"9","weight":"36","note":""}]},{"name":"Hip thrusty","superSet":false,"sets":[{"reps":"10","weight":"100","note":""},{"reps":"10","weight":"100","note":""},{"reps":"8","weight":"100","note":""}]},{"name":"Ball leg curl jednonóż","superSet":false,"sets":[{"reps":"12","weight":"","note":""},{"reps":"12","weight":"","note":""}]},{"name":"Suwnica izometryczna obunoż","superSet":false,"sets":[{"reps":"12","weight":"154","note":""},{"reps":"12","weight":"165","note":""},{"reps":"12","weight":"177","note":""}]},{"name":"Uginanie nóg na maszynie","superSet":false,"sets":[{"reps":"12","weight":"50","note":""},{"reps":"12","weight":"57","note":""},{"reps":"7","weight":"63","note":""}]},{"name":"Seated calf raise","superSet":false,"sets":[{"reps":"12","weight":"60","note":""},{"reps":"10","weight":"60","note":""},{"reps":"10","weight":"50","note":""}]}]},"2026-05-07":{"exercises":[{"name":"Wykroki chodzone","superSet":false,"sets":[{"reps":"12","weight":"40","note":""},{"reps":"10","weight":"44","note":""},{"reps":"6","weight":"44","note":""}]},{"name":"Hip thrusty","superSet":false,"sets":[{"reps":"10","weight":"110","note":""},{"reps":"10","weight":"120","note":""},{"reps":"8","weight":"130","note":""}]},{"name":"Ball leg curl jednonóż","superSet":false,"sets":[{"reps":"12","weight":"","note":""},{"reps":"12","weight":"","note":""}]},{"name":"Suwnica izometryczna obunoż","superSet":false,"sets":[{"reps":"12","weight":"177","note":""},{"reps":"12","weight":"177","note":""},{"reps":"11","weight":"188","note":""}]},{"name":"Uginanie nóg na maszynie","superSet":false,"sets":[{"reps":"10","weight":"63","note":""},{"reps":"12","weight":"57","note":""},{"reps":"10","weight":"57","note":""}]},{"name":"Seated calf raise","superSet":false,"sets":[{"reps":"10","weight":"70","note":""},{"reps":"10","weight":"80","note":""},{"reps":"8","weight":"90","note":""}]}]},"2026-05-15":{"exercises":[{"name":"Wykroki chodzone","superSet":false,"sets":[{"reps":"11","weight":"44","note":""},{"reps":"10","weight":"44","note":""},{"reps":"9","weight":"40","note":""}]},{"name":"Hip thrusty","superSet":false,"sets":[{"reps":"10","weight":"120","note":""},{"reps":"8","weight":"130","note":""},{"reps":"10","weight":"120","note":""}]},{"name":"Ball leg curl jednonóż","superSet":false,"sets":[{"reps":"12","weight":"","note":""},{"reps":"12","weight":"","note":""}]},{"name":"Suwnica izometryczna obunoż","superSet":false,"sets":[{"reps":"12","weight":"177","note":""},{"reps":"12","weight":"188","note":""},{"reps":"12","weight":"188","note":""}]},{"name":"Uginanie nóg na maszynie","superSet":false,"sets":[{"reps":"8","weight":"70","note":""},{"reps":"11","weight":"63","note":""},{"reps":"9","weight":"63","note":""}]},{"name":"Seated calf raise","superSet":false,"sets":[{"reps":"10","weight":"80","note":""},{"reps":"9","weight":"90","note":""},{"reps":"8","weight":"90","note":""}]}]}}},"FBW":{"workouts":{"2026-04-25":{"exercises":[{"name":"Wyciskanie hantli na ławce skośnej","superSet":false,"sets":[{"reps":"11","weight":"52","note":""},{"reps":"8","weight":"56","note":""},{"reps":"5","weight":"56","note":""}]},{"name":"Ściąganie drążka","superSet":false,"sets":[{"reps":"12","weight":"66","note":""},{"reps":"12","weight":"73","note":""},{"reps":"12","weight":"66","note":""}]},{"name":"Triceps na wyciągu górnym","superSet":false,"sets":[{"reps":"12","weight":"18","note":""},{"reps":"11","weight":"20.3","note":""},{"reps":"8","weight":"20.3","note":""}]},{"name":"Tylna głowa barku na butterfly","superSet":false,"sets":[{"reps":"12","weight":"66","note":""},{"reps":"10","weight":"59","note":""},{"reps":"8","weight":"59","note":""}]},{"name":"Prostowanie nóg na maszynie","superSet":false,"sets":[{"reps":"10","weight":"77","note":""},{"reps":"12","weight":"70","note":""},{"reps":"8","weight":"70","note":""}]},{"name":"Odwodzenie ramion (lateral raise)","superSet":false,"sets":[{"reps":"9","weight":"8","note":""},{"reps":"9","weight":"8","note":""},{"reps":"8","weight":"8","note":""}]},{"name":"Wspięcia na palce stojąc","superSet":false,"sets":[{"reps":"10","weight":"20","note":""},{"reps":"10","weight":"20","note":""},{"reps":"10","weight":"20","note":""}]},{"name":"RDL jednonóż","superSet":false,"sets":[{"reps":"10","weight":"56","note":""},{"reps":"10","weight":"56","note":""}]}]},"2026-05-02":{"exercises":[{"name":"Wyciskanie hantli na ławce skośnej","superSet":false,"sets":[{"reps":"10","weight":"56","note":""},{"reps":"5","weight":"56","note":""},{"reps":"6","weight":"52","note":""}]},{"name":"Ściąganie drążka","superSet":false,"sets":[{"reps":"12","weight":"73","note":""},{"reps":"10","weight":"73","note":""},{"reps":"10","weight":"66","note":""}]},{"name":"Triceps na wyciągu górnym","superSet":false,"sets":[{"reps":"11","weight":"20.3","note":""},{"reps":"9","weight":"20.3","note":""},{"reps":"8","weight":"20.3","note":""}]},{"name":"Tylna głowa barku na butterfly","superSet":false,"sets":[{"reps":"13","weight":"59","note":""},{"reps":"12","weight":"59","note":""},{"reps":"12","weight":"52","note":""}]},{"name":"Prostowanie nóg na maszynie","superSet":false,"sets":[{"reps":"10","weight":"90","note":""},{"reps":"10","weight":"90","note":""},{"reps":"6","weight":"84","note":""}]},{"name":"Uginanie nóg na maszynie","superSet":false,"sets":[{"reps":"12","weight":"63","note":""},{"reps":"11","weight":"63","note":""},{"reps":"10","weight":"57","note":""}]},{"name":"Glute maszyna","superSet":false,"sets":[{"reps":"15","weight":"15","note":""},{"reps":"12","weight":"30","note":""},{"reps":"10","weight":"40","note":""}]},{"name":"Seated calf raise","superSet":false,"sets":[{"reps":"10","weight":"60","note":""},{"reps":"12","weight":"60","note":""},{"reps":"8","weight":"60","note":""}]}]},"2026-05-10":{"exercises":[{"name":"Wyciskanie hantli na ławce skośnej","superSet":false,"sets":[{"reps":"10","weight":"60","note":""},{"reps":"6","weight":"60","note":""},{"reps":"5","weight":"56","note":""}]},{"name":"Ściąganie drążka","superSet":false,"sets":[{"reps":"12","weight":"79","note":""},{"reps":"8","weight":"86","note":""},{"reps":"10","weight":"73","note":""}]},{"name":"Triceps na wyciągu górnym","superSet":false,"sets":[{"reps":"6","weight":"24.8","note":""},{"reps":"7","weight":"22.5","note":""},{"reps":"10","weight":"20.3","note":""}]},{"name":"Tylna głowa barku na butterfly","superSet":false,"sets":[{"reps":"10","weight":"73","note":""},{"reps":"10","weight":"66","note":""},{"reps":"10","weight":"59","note":""}]},{"name":"Prostowanie nóg na maszynie","superSet":false,"sets":[{"reps":"12","weight":"84","note":""},{"reps":"10","weight":"97","note":""},{"reps":"9","weight":"90","note":""}]},{"name":"Wspięcia na palce stojąc","superSet":true,"sets":[{"reps":"15","weight":"20","note":""},{"reps":"15","weight":"20","note":""},{"reps":"15","weight":"20","note":""}]},{"name":"Odwodzenie ramion (lateral raise)","superSet":false,"sets":[{"reps":"10","weight":"10","note":""},{"reps":"10","weight":"10","note":""},{"reps":"10","weight":"8","note":""}]},{"name":"RDL jednonóż","superSet":false,"sets":[{"reps":"10","weight":"64","note":""},{"reps":"10","weight":"64","note":""}]}]},"2026-05-17":{"exercises":[{"name":"Wyciskanie hantli na ławce skośnej","superSet":false,"sets":[{"reps":"8","weight":"64","note":""},{"reps":"5","weight":"64","note":""},{"reps":"5","weight":"60","note":""}]},{"name":"Ściąganie drążka","superSet":false,"sets":[{"reps":"8","weight":"86","note":""},{"reps":"12","weight":"79","note":""},{"reps":"8","weight":"79","note":""}]},{"name":"Tylna głowa barku na butterfly","superSet":false,"sets":[{"reps":"15","weight":"66","note":""},{"reps":"9","weight":"73","note":""},{"reps":"9","weight":"66","note":""}]},{"name":"Triceps na wyciągu górnym","superSet":false,"sets":[{"reps":"11","weight":"22.5","note":""},{"reps":"10","weight":"22.5","note":""},{"reps":"6","weight":"20.3","note":""}]},{"name":"Prostowanie nóg na maszynie","superSet":false,"sets":[{"reps":"12","weight":"84","note":""},{"reps":"10","weight":"90","note":""},{"reps":"10","weight":"84","note":""}]},{"name":"Wspięcia na palce stojąc","superSet":false,"sets":[{"reps":"15","weight":"24","note":""},{"reps":"15","weight":"24","note":""},{"reps":"15","weight":"24","note":""}]},{"name":"Odwodzenie ramion (lateral raise)","superSet":false,"sets":[{"reps":"10","weight":"10","note":""},{"reps":"10","weight":"10","note":""},{"reps":"10","weight":"10","note":""}]},{"name":"RDL jednonóż","superSet":false,"sets":[{"reps":"10","weight":"68","note":""},{"reps":"10","weight":"68","note":""}]}]}}}},"templates":[],"records":{"wykroki chodzone":{"maxWeight":44.0,"maxVolume":1488.0},"hip thrusty":{"maxWeight":130.0,"maxVolume":3440.0},"ball leg curl jednonóż":{"maxWeight":0,"maxVolume":0},"suwnica izometryczna obunoż":{"maxWeight":188.0,"maxVolume":6636.0},"uginanie nóg na maszynie":{"maxWeight":70.0,"maxVolume":2205.0},"seated calf raise":{"maxWeight":90.0,"maxVolume":2360.0},"wyciskanie hantli na ławce skośnej":{"maxWeight":64.0,"maxVolume":1300.0},"ściąganie drążka":{"maxWeight":86.0,"maxVolume":2460.0},"triceps na wyciągu górnym":{"maxWeight":24.8,"maxVolume":601.7},"tylna głowa barku na butterfly":{"maxWeight":73.0,"maxVolume":2241.0},"prostowanie nóg na maszynie":{"maxWeight":97.0,"maxVolume":2788.0},"odwodzenie ramion (lateral raise)":{"maxWeight":10.0,"maxVolume":300.0},"wspięcia na palce stojąc":{"maxWeight":24.0,"maxVolume":1080.0},"rdl jednonóż":{"maxWeight":68.0,"maxVolume":1360.0},"glute maszyna":{"maxWeight":40.0,"maxVolume":985.0},"wyciskanie sztangi na ławce płaskiej":{"maxWeight":75.0,"maxVolume":1525.0},"podciąganie":{"maxWeight":0,"maxVolume":0},"military press":{"maxWeight":40.0,"maxVolume":875.0},"wiosłowanie na wyciągu (seated row)":{"maxWeight":84.0,"maxVolume":2296.0},"rozpiętki na bramie":{"maxWeight":86.0,"maxVolume":2621.0},"triceps na wyciągu":{"maxWeight":32.0,"maxVolume":1255.0},"uginanie ramion na modlitewniku":{"maxWeight":63.0,"maxVolume":1541.0},"wiosłowanie wąskim chwytem":{"maxWeight":86.0,"maxVolume":2422.0}}};
+
+
+
 /* ── PREDEFINIOWANE SZABLONY ─────────────────────────────── */
 const BUILTIN = [
   { id:'builtin_lbw', name:'LBW – Trening nóg', planType:'LBW', builtin:true, exercises:[
@@ -57,6 +62,7 @@ const App = {
 
   /* INIT */
   init() {
+    this.importBuiltinData();
     this.db = DB.load();
     this._injectBuiltins();
     if ('serviceWorker' in navigator)
@@ -733,5 +739,117 @@ const App = {
     document.getElementById('modal-confirm').style.display='flex';
   },
 };
+
+
+  /* ── IMPORT / EKSPORT DANYCH ───────────────────────────── */
+  _importPending: null,
+
+  openDataModal() {{
+    document.getElementById('import-status').style.display='none';
+    document.getElementById('import-confirm-btn').style.display='none';
+    document.getElementById('import-file-input').value='';
+    this._importPending=null;
+    document.getElementById('modal-data').style.display='flex';
+  }},
+  closeDataModal(e) {{
+    if (e && e.target!==document.getElementById('modal-data')) return;
+    document.getElementById('modal-data').style.display='none';
+    this._importPending=null;
+  }},
+
+  exportAllData() {{
+    const data = JSON.parse(localStorage.getItem(DB.KEY)||'{{}}');
+    const blob = new Blob([JSON.stringify(data, null, 2)], {{type:'application/json'}});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download='trening_backup_'+new Date().toISOString().split('T')[0]+'.json';
+    a.click(); URL.revokeObjectURL(url);
+    this._toast('Dane wyeksportowane ✓');
+  }},
+
+  handleImportFile(e) {{
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {{
+      try {{
+        const data = JSON.parse(ev.target.result);
+        if (!data.plans) throw new Error('Nieprawidłowy format pliku');
+        this._importPending = data;
+        const lbw = Object.keys(data.plans?.LBW?.workouts||{{}}).length;
+        const ubw = Object.keys(data.plans?.UBW?.workouts||{{}}).length;
+        const fbw = Object.keys(data.plans?.FBW?.workouts||{{}}).length;
+        const status = document.getElementById('import-status');
+        status.textContent = `Znaleziono: ${{lbw}} treningów LBW, ${{ubw}} UBW, ${{fbw}} FBW. Kliknij "Importuj" aby wczytać.`;
+        status.className='import-status import-status--ok';
+        status.style.display='block';
+        document.getElementById('import-confirm-btn').style.display='block';
+      }} catch(err) {{
+        const status = document.getElementById('import-status');
+        status.textContent='Błąd: '+err.message;
+        status.className='import-status import-status--err';
+        status.style.display='block';
+        document.getElementById('import-confirm-btn').style.display='none';
+      }}
+    }};
+    reader.readAsText(file);
+  }},
+
+  confirmImport() {{
+    if (!this._importPending) return;
+    const incoming = this._importPending;
+    const current  = DB.load();
+
+    // Scal treningi (nie nadpisuj, dodaj nowe daty)
+    ['UBW','LBW','FBW'].forEach(plan => {{
+      const iw = incoming.plans?.[plan]?.workouts||{{}};
+      Object.assign(current.plans[plan].workouts, iw);
+    }});
+
+    // Scal szablony (dodaj jeśli nie ma o danym id)
+    const existingIds = new Set(current.templates.map(t=>t.id));
+    (incoming.templates||[]).forEach(t => {{
+      if (!existingIds.has(t.id)) current.templates.push(t);
+    }});
+
+    // Scal rekordy (zachowaj wyższe wartości)
+    const ir = incoming.records||{{}};
+    Object.keys(ir).forEach(k => {{
+      const cur = current.records[k]||{{maxWeight:0,maxVolume:0}};
+      current.records[k] = {{
+        maxWeight: Math.max(cur.maxWeight, ir[k].maxWeight||0),
+        maxVolume: Math.max(cur.maxVolume, ir[k].maxVolume||0),
+      }};
+    }});
+
+    DB.save(current);
+    this.db = current;
+    document.getElementById('modal-data').style.display='none';
+    this._importPending=null;
+    this._toast('Import zakończony ✓');
+    this._show('screen-home');
+  }},
+
+  /* Wczytaj wbudowane dane historyczne (wywołuje się raz) */
+  importBuiltinData() {{
+    const current = DB.load();
+    const alreadyImported = current._builtinImported;
+    if (alreadyImported) return;
+
+    const incoming = IMPORT_DATA;
+    ['UBW','LBW','FBW'].forEach(plan => {{
+      const iw = incoming.plans?.[plan]?.workouts||{{}};
+      Object.assign(current.plans[plan].workouts, iw);
+    }});
+    const ir = incoming.records||{{}};
+    Object.keys(ir).forEach(k => {{
+      const cur = current.records[k]||{{maxWeight:0,maxVolume:0}};
+      current.records[k] = {{
+        maxWeight: Math.max(cur.maxWeight, ir[k].maxWeight||0),
+        maxVolume: Math.max(cur.maxVolume, ir[k].maxVolume||0),
+      }};
+    }});
+    current._builtinImported = true;
+    DB.save(current);
+  }},
 
 document.addEventListener('DOMContentLoaded',()=>App.init());

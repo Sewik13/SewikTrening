@@ -43,7 +43,9 @@
       <div class="plan-card__arrow">›</div>
     </button>
   </main>
-  <footer class="home-footer"><p>Dane zapisywane lokalnie na urządzeniu</p></footer>
+  <footer class="home-footer">
+    <button class="data-mgmt-btn" onclick="App.openDataModal()">⚙️ Zarządzaj danymi (import / eksport)</button>
+  </footer>
 </div>
 
 <!-- EKRAN PLANU -->
@@ -195,6 +197,30 @@
     <div class="modal-actions">
       <button class="btn-secondary" onclick="App.selectAllExport()">Zaznacz wszystko</button>
       <button class="btn-primary" onclick="App.copyExportText()">📋 Kopiuj</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: import/eksport danych -->
+<div id="modal-data" class="modal-overlay" style="display:none;" onclick="App.closeDataModal(event)">
+  <div class="modal-box">
+    <h3 class="modal-title">⚙️ Zarządzanie danymi</h3>
+    <p class="modal-desc">Eksportuj lub importuj wszystkie treningi.</p>
+
+    <button class="btn-secondary btn-full" style="margin-bottom:10px;" onclick="App.exportAllData()">
+      ⬇️ Eksportuj dane (pobierz JSON)
+    </button>
+
+    <div class="import-zone" id="import-zone">
+      <div class="import-zone__label">📂 Wgraj plik JSON z danymi</div>
+      <div class="import-zone__sub">Kliknij lub przeciągnij plik</div>
+      <input type="file" id="import-file-input" accept=".json" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="App.handleImportFile(event)"/>
+    </div>
+    <div id="import-status" class="import-status" style="display:none;"></div>
+
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn-secondary" onclick="App.closeDataModal()">Zamknij</button>
+      <button class="btn-primary" id="import-confirm-btn" style="display:none;" onclick="App.confirmImport()">✅ Importuj</button>
     </div>
   </div>
 </div>

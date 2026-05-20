@@ -1,14 +1,11 @@
 /**
- * ============================================================
- *  TRENING PWA – service-worker.js
- *  Obsługa offline: cache-first dla zasobów statycznych
- * ============================================================
+ * TRENING PWA – service-worker.js
+ * Zmień CACHE_NAME przy każdej aktualizacji – wymusza pobranie nowych plików.
  */
 
-const CACHE_NAME = 'trening-pwa-v1';
+const CACHE_NAME = 'trening-pwa-v3'; // <-- zmieniona wersja = stary cache usunięty
 
-/** Zasoby do zakeszowania przy pierwszej instalacji */
-const ASSETS_TO_CACHE = [
+const ASSETS = [
   './',
   './index.html',
   './styles.css',
@@ -18,57 +15,34 @@ const ASSETS_TO_CACHE = [
   './icons/icon-512.png'
 ];
 
-/* ---- INSTALL: zakeszuj zasoby statyczne ---- */
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))
   );
-  // Aktywuj nowy SW natychmiast
-  self.skipWaiting();
+  self.skipWaiting(); // aktywuj natychmiast
 });
 
-/* ---- ACTIVATE: usuń stare cache ---- */
-self.addEventListener('activate', event => {
-  event.waitUntil(
+self.addEventListener('activate', e => {
+  e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
-  // Przejmij kontrolę nad wszystkimi otwartymi kartami
-  self.clients.claim();
+  self.clients.claim(); // przejmij wszystkie otwarte karty
 });
 
-/* ---- FETCH: cache-first, fallback do sieci ---- */
-self.addEventListener('fetch', event => {
-  // Obsługuj tylko GET
-  if (event.request.method !== 'GET') return;
-
-  event.respondWith(
-    caches.match(event.request).then(cached => {
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
       if (cached) return cached;
-
-      // Jeśli nie ma w cache – pobierz z sieci i zakeszuj
-      return fetch(event.request)
-        .then(response => {
-          // Keszuj tylko poprawne odpowiedzi
-          if (response && response.status === 200 && response.type === 'basic') {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, clone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Brak sieci i cache – zwróć index.html jako fallback SPA
-          return caches.match('./index.html');
-        });
+      return fetch(e.request).then(res => {
+        if (res && res.status === 200 && res.type === 'basic') {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+        }
+        return res;
+      }).catch(() => caches.match('./index.html'));
     })
   );
 });
