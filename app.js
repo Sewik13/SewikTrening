@@ -221,11 +221,18 @@ const App = {
 
     (workout.exercises || []).forEach((ex, i) => {
       lines.push(`\n${i + 1}. ${ex.name || '(bez nazwy)'}`);
+      let exTotal = 0;
       (ex.sets || []).forEach((set, si) => {
         const reps   = set.reps   || '–';
         const weight = set.weight || '–';
-        lines.push(`   Seria ${si + 1}: ${reps} powt. × ${weight}`);
+        const vol    = this._calcVolume([set]);
+        const volStr = vol.hasData ? ` → ${vol.total.toLocaleString('pl-PL')} kg` : '';
+        lines.push(`   Seria ${si + 1}: ${reps} powt. × ${weight}${volStr}`);
+        exTotal += vol.total;
       });
+      if (exTotal > 0) {
+        lines.push(`   ─ Objętość: ${exTotal.toLocaleString('pl-PL')} kg`);
+      }
     });
 
     if ((workout.exercises || []).length === 0) {
@@ -336,18 +343,21 @@ const App = {
     const table = document.createElement('div');
     table.className = 'sets-table';
 
-    // nagłówek kolumn: SERIA | POWT. | CIĘŻAR | (usuń)
     const th = document.createElement('div');
     th.className = 'sets-table-header';
     th.innerHTML = '<span>SERIA</span><span>POWT.</span><span>CIĘŻAR</span>';
     table.appendChild(th);
 
     (exercise.sets || []).forEach((set, si) =>
-      table.appendChild(this._buildSetRow(set, exIndex, si))
+      table.appendChild(this._buildSetRow(set, exIndex, si, table))
     );
     card.appendChild(table);
 
-    // --- stopka ---
+    // --- pasek objętości ---
+    const volumeBar = this._buildVolumeBar(exercise.sets || []);
+    card.appendChild(volumeBar);
+
+    // --- stopka: dodaj serię ---
     const footer = document.createElement('div');
     footer.className = 'exercise-footer';
     const addSetBtn = document.createElement('button');
@@ -361,9 +371,103 @@ const App = {
   },
 
   /* ============================================================
+     OBLICZANIE OBJĘTOŚCI
+     ============================================================ */
+
+  /**
+   * Parsuje ciężar z pola tekstowego → liczba kg.
+   * Obsługuje: "75", "75 kg", "75.5", "75,5", "75kg".
+   * Zwraca 0 jeśli nie można sparsować.
+   */
+  _parseWeight(str) {
+    if (!str) return 0;
+    // usuń jednostki, zamień przecinek na kropkę
+    const cleaned = String(str)
+      .replace(/[kK][gG]?/g, '')   // kg, Kg, KG, k
+      .replace(',', '.')
+      .trim();
+    const val = parseFloat(cleaned);
+    return isNaN(val) || val < 0 ? 0 : val;
+  },
+
+  /**
+   * Oblicza objętość jednego ćwiczenia (suma reps × weight).
+   * Zwraca obiekt { total, sets, hasData }
+   * sets = tablica { reps, weight, vol } dla każdej serii
+   */
+  _calcVolume(sets) {
+    let total   = 0;
+    let hasData = false;
+    const detail = (sets || []).map(set => {
+      const reps   = parseInt(set.reps)          || 0;
+      const weight = this._parseWeight(set.weight);
+      const vol    = reps * weight;
+      if (reps > 0 && weight > 0) hasData = true;
+      total += vol;
+      return { reps, weight, vol };
+    });
+    return { total, sets: detail, hasData };
+  },
+
+  /** Buduje wizualny pasek objętości pod tabelą serii */
+  _buildVolumeBar(sets) {
+    const { total, sets: detail, hasData } = this._calcVolume(sets);
+
+    const bar = document.createElement('div');
+    bar.className = 'volume-bar';
+
+    if (!hasData) {
+      bar.innerHTML = `
+        <div class="volume-bar__label">OBJĘTOŚĆ</div>
+        <div class="volume-bar__empty">Wpisz powtórzenia i ciężar</div>`;
+      return bar;
+    }
+
+    // Szczegółowe wiersze
+    const rowsHTML = detail
+      .map((s, i) => {
+        if (s.reps === 0 && s.weight === 0) {
+          return `<div class="volume-detail__row">
+            <span class="volume-detail__num">${i + 1}</span>
+            <span class="volume-detail__calc volume-detail__empty">—</span>
+          </div>`;
+        }
+        // Sprawdzenie: wyświetl wyrażenie i wynik
+        const expr = `${s.reps} × ${s.weight} kg`;
+        const res  = s.vol > 0 ? `= ${s.vol.toLocaleString('pl-PL')} kg` : '= —';
+        return `<div class="volume-detail__row">
+          <span class="volume-detail__num">${i + 1}</span>
+          <span class="volume-detail__calc">${expr} <span class="volume-detail__result">${res}</span></span>
+        </div>`;
+      })
+      .join('');
+
+    bar.innerHTML = `
+      <div class="volume-bar__header">
+        <div class="volume-bar__label">OBJĘTOŚĆ</div>
+        <div class="volume-bar__total">${total.toLocaleString('pl-PL')} kg</div>
+      </div>
+      <div class="volume-detail">${rowsHTML}</div>`;
+
+    return bar;
+  },
+
+  /**
+   * Aktualizuje pasek objętości na żywo, bez przebudowy całej karty.
+   * Wywołuje się po każdej zmianie reps/weight w danej karcie.
+   */
+  _refreshVolumeBar(card, exIndex) {
+    const sets  = this._currentWorkout().exercises[exIndex]?.sets || [];
+    const oldBar = card.querySelector('.volume-bar');
+    const newBar = this._buildVolumeBar(sets);
+    if (oldBar) card.replaceChild(newBar, oldBar);
+    else card.insertBefore(newBar, card.querySelector('.exercise-footer'));
+  },
+
+  /* ============================================================
      WIERSZ SERII – dwa pola: reps + weight
      ============================================================ */
-  _buildSetRow(set, exIndex, setIndex) {
+  _buildSetRow(set, exIndex, setIndex, tableRef) {
     const row = document.createElement('div');
     row.className = 'set-row';
 
@@ -380,9 +484,12 @@ const App = {
     repsInput.placeholder = 'np. 10';
     repsInput.min         = '0';
     repsInput.value       = set.reps || '';
-    repsInput.addEventListener('change', () => {
+    repsInput.addEventListener('input', () => {
       this._currentWorkout().exercises[exIndex].sets[setIndex].reps = repsInput.value.trim();
       Storage.save(this.db);
+      // Aktualizuj objętość na żywo
+      const card = repsInput.closest('.exercise-card');
+      if (card) this._refreshVolumeBar(card, exIndex);
     });
 
     // separator ×
@@ -397,9 +504,12 @@ const App = {
     weightInput.className   = 'set-weight-input';
     weightInput.placeholder = 'kg';
     weightInput.value       = set.weight || '';
-    weightInput.addEventListener('change', () => {
+    weightInput.addEventListener('input', () => {
       this._currentWorkout().exercises[exIndex].sets[setIndex].weight = weightInput.value.trim();
       Storage.save(this.db);
+      // Aktualizuj objętość na żywo
+      const card = weightInput.closest('.exercise-card');
+      if (card) this._refreshVolumeBar(card, exIndex);
     });
 
     // przycisk usuń serię
