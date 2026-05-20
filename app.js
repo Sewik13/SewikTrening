@@ -9,6 +9,59 @@
 'use strict';
 
 /* ============================================================
+   PREDEFINIOWANE SZABLONY – wbudowane w kod
+   Zawsze dostępne, niezależnie od danych w localStorage.
+   ID zaczyna się od "builtin_" – rozróżnia je od szablonów użytkownika.
+   ============================================================ */
+const BUILTIN_TEMPLATES = [
+  {
+    id: 'builtin_lbw',
+    name: 'LBW – Trening nóg',
+    planType: 'LBW',
+    builtin: true,
+    exercises: [
+      { name: 'Wykroki chodzone',        sets: 3 },
+      { name: 'Hip thrusty',             sets: 3 },
+      { name: 'Ball leg curl',           sets: 2 },
+      { name: 'Suwnica izometryczna',    sets: 3 },
+      { name: 'Uginanie nóg na maszynie',sets: 3 },
+      { name: 'Seated calf raise',       sets: 3 },
+    ]
+  },
+  {
+    id: 'builtin_ubw',
+    name: 'UBW – Trening górny',
+    planType: 'UBW',
+    builtin: true,
+    exercises: [
+      { name: 'Wyciskanie sztangi na ławce płaskiej', sets: 3 },
+      { name: 'Podciąganie',                          sets: 3 },
+      { name: 'Military press',                       sets: 3 },
+      { name: 'Wiosłowanie na wyciągu (seated row)',  sets: 3 },
+      { name: 'Rozpiętki na bramie',                  sets: 3 },
+      { name: 'Triceps na wyciągu',                   sets: 3 },
+      { name: 'Uginanie ramion na modlitewniku',      sets: 3 },
+    ]
+  },
+  {
+    id: 'builtin_fbw',
+    name: 'FBW – Full Body',
+    planType: 'FBW',
+    builtin: true,
+    exercises: [
+      { name: 'Wyciskanie hantli na ławce skośnej',  sets: 3 },
+      { name: 'Ściąganie drążka',                    sets: 3 },
+      { name: 'Odwodzenie ramion (lateral raise)',   sets: 3 },
+      { name: 'Tylna głowa barku na butterfly',      sets: 3 },
+      { name: 'Triceps na wyciągu górnym',           sets: 3 },
+      { name: 'Prostowanie nóg na maszynie',         sets: 3 },
+      { name: 'Wspięcia na palce stojąc',            sets: 3 },
+      { name: 'RDL jednonóż',                        sets: 3 },
+    ]
+  },
+];
+
+/* ============================================================
    STORAGE
    ============================================================ */
 const Storage = {
@@ -68,14 +121,34 @@ const App = {
   _copySourceDate:    null,
   _editingTemplateId: null,
   _useTemplateId:     null,
+  // Przeciąganie ćwiczeń
+  _drag: { active: false, srcIdx: null, overIdx: null, startY: 0, card: null, clone: null },
 
   /* ============================================================
      INICJALIZACJA
      ============================================================ */
   init() {
     this.db = Storage.load();
+    this._injectBuiltinTemplates();
     this._registerServiceWorker();
     this._showScreen('screen-home');
+  },
+
+  /**
+   * Wstrzykuje wbudowane szablony do bazy jeśli ich tam nie ma.
+   * Identyfikowane po id zaczynającym się od "builtin_".
+   * Nie nadpisuje szablonów użytkownika o tym samym id.
+   */
+  _injectBuiltinTemplates() {
+    const existing = new Set((this.db.templates || []).map(t => t.id));
+    let added = false;
+    BUILTIN_TEMPLATES.forEach(tpl => {
+      if (!existing.has(tpl.id)) {
+        this.db.templates.unshift({ ...tpl }); // wstaw na początek listy
+        added = true;
+      }
+    });
+    if (added) Storage.save(this.db);
   },
 
   _registerServiceWorker() {
@@ -314,11 +387,23 @@ const App = {
   _buildExerciseCard(exercise, exIndex) {
     const card = document.createElement('div');
     card.className = 'exercise-card';
+    card.dataset.exIndex = exIndex;
 
     // --- nagłówek ---
     const header = document.createElement('div');
     header.className = 'exercise-header';
-    header.innerHTML = `<span class="exercise-number">Ćw. ${exIndex + 1}</span>`;
+
+    // Uchwyt do przeciągania
+    const dragHandle = document.createElement('div');
+    dragHandle.className   = 'drag-handle';
+    dragHandle.innerHTML   = '⠿';
+    dragHandle.title       = 'Przeciągnij, żeby zmienić kolejność';
+    this._attachDragHandle(dragHandle, exIndex);
+
+    header.appendChild(dragHandle);
+    header.innerHTML += `<span class="exercise-number">Ćw. ${exIndex + 1}</span>`;
+    // przywróć dragHandle (innerHTML skasowało referencję)
+    header.insertBefore(dragHandle, header.firstChild);
 
     const nameInput = document.createElement('input');
     nameInput.type        = 'text';
@@ -331,7 +416,7 @@ const App = {
     });
 
     const delBtn = document.createElement('button');
-    delBtn.className  = 'exercise-delete-btn';
+    delBtn.className   = 'exercise-delete-btn';
     delBtn.textContent = '✕';
     delBtn.addEventListener('click', () => this._confirmDeleteExercise(exIndex));
 
@@ -342,22 +427,19 @@ const App = {
     // --- tabela serii ---
     const table = document.createElement('div');
     table.className = 'sets-table';
-
     const th = document.createElement('div');
     th.className = 'sets-table-header';
     th.innerHTML = '<span>SERIA</span><span>POWT.</span><span>CIĘŻAR</span>';
     table.appendChild(th);
-
     (exercise.sets || []).forEach((set, si) =>
       table.appendChild(this._buildSetRow(set, exIndex, si, table))
     );
     card.appendChild(table);
 
     // --- pasek objętości ---
-    const volumeBar = this._buildVolumeBar(exercise.sets || []);
-    card.appendChild(volumeBar);
+    card.appendChild(this._buildVolumeBar(exercise.sets || []));
 
-    // --- stopka: dodaj serię ---
+    // --- stopka ---
     const footer = document.createElement('div');
     footer.className = 'exercise-footer';
     const addSetBtn = document.createElement('button');
@@ -368,6 +450,125 @@ const App = {
     card.appendChild(footer);
 
     return card;
+  },
+
+  /* ============================================================
+     DRAG & DROP – zmiana kolejności ćwiczeń
+     Działa na mobile (touch) i desktopie (mouse).
+     ============================================================ */
+  _attachDragHandle(handle, exIndex) {
+    // Touch (iPhone)
+    handle.addEventListener('touchstart', e => this._onDragStart(e, exIndex, true),  { passive: false });
+    // Mouse (desktop)
+    handle.addEventListener('mousedown',  e => this._onDragStart(e, exIndex, false), { passive: false });
+  },
+
+  _onDragStart(e, srcIdx, isTouch) {
+    e.preventDefault();
+    const card = e.currentTarget.closest('.exercise-card');
+    if (!card) return;
+
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    const rect    = card.getBoundingClientRect();
+
+    // Klon wizualny – "duch" przeciąganej karty
+    const clone = card.cloneNode(true);
+    clone.className          = 'exercise-card exercise-card--drag-ghost';
+    clone.style.width        = rect.width + 'px';
+    clone.style.top          = rect.top + window.scrollY + 'px';
+    clone.style.left         = rect.left + 'px';
+    document.body.appendChild(clone);
+
+    card.classList.add('exercise-card--dragging');
+
+    this._drag = {
+      active: true,
+      srcIdx,
+      overIdx: srcIdx,
+      startY:  clientY,
+      offsetY: clientY - rect.top,
+      card,
+      clone,
+      isTouch
+    };
+
+    if (isTouch) {
+      document.addEventListener('touchmove', this._boundDragMove  = e => this._onDragMove(e, true),  { passive: false });
+      document.addEventListener('touchend',  this._boundDragEnd   = e => this._onDragEnd(e, true),   { passive: false });
+    } else {
+      document.addEventListener('mousemove', this._boundDragMove  = e => this._onDragMove(e, false));
+      document.addEventListener('mouseup',   this._boundDragEnd   = e => this._onDragEnd(e, false));
+    }
+  },
+
+  _onDragMove(e, isTouch) {
+    if (!this._drag.active) return;
+    e.preventDefault();
+
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    const d       = this._drag;
+
+    // Porusz klonem
+    d.clone.style.top = (clientY - d.offsetY + window.scrollY) + 'px';
+
+    // Znajdź nad którą kartą jesteśmy
+    const container = document.getElementById('exercises-container');
+    const cards     = Array.from(container.querySelectorAll('.exercise-card:not(.exercise-card--drag-ghost)'));
+    let overIdx = d.srcIdx;
+    cards.forEach((c, i) => {
+      const r   = c.getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      if (clientY > mid) overIdx = parseInt(c.dataset.exIndex ?? i);
+    });
+
+    if (overIdx !== d.overIdx) {
+      // Wyczyść stare podświetlenie
+      cards.forEach(c => c.classList.remove('exercise-card--drop-above', 'exercise-card--drop-below'));
+
+      // Podświetl cel
+      if (overIdx !== d.srcIdx) {
+        const targetCard = cards.find(c => parseInt(c.dataset.exIndex) === overIdx);
+        if (targetCard) {
+          targetCard.classList.add(
+            overIdx < d.srcIdx ? 'exercise-card--drop-above' : 'exercise-card--drop-below'
+          );
+        }
+      }
+      d.overIdx = overIdx;
+    }
+  },
+
+  _onDragEnd(e, isTouch) {
+    if (!this._drag.active) return;
+    const d = this._drag;
+
+    // Usuń listenery
+    if (isTouch) {
+      document.removeEventListener('touchmove', this._boundDragMove);
+      document.removeEventListener('touchend',  this._boundDragEnd);
+    } else {
+      document.removeEventListener('mousemove', this._boundDragMove);
+      document.removeEventListener('mouseup',   this._boundDragEnd);
+    }
+
+    // Posprzątaj DOM
+    d.clone.remove();
+    d.card.classList.remove('exercise-card--dragging');
+    document.querySelectorAll('.exercise-card--drop-above, .exercise-card--drop-below')
+      .forEach(c => c.classList.remove('exercise-card--drop-above', 'exercise-card--drop-below'));
+
+    const srcIdx  = d.srcIdx;
+    const destIdx = d.overIdx;
+    this._drag = { active: false };
+
+    // Przesuń ćwiczenie w danych
+    if (srcIdx !== destIdx) {
+      const exercises = this._currentWorkout().exercises;
+      const [moved]   = exercises.splice(srcIdx, 1);
+      exercises.splice(destIdx, 0, moved);
+      Storage.save(this.db);
+      this._renderWorkout();
+    }
   },
 
   /* ============================================================
