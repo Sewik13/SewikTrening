@@ -1,0 +1,1043 @@
+/* ============================================================
+   TRENING PWA – styles.css
+   Tryb ciemny, zoptymalizowany pod iPhone
+   ============================================================ */
+
+/* ---- Zmienne CSS – Dark Mode ---- */
+:root {
+  --color-bg:        #0C0C0E;
+  --color-surface:   #1C1C1E;
+  --color-surface2:  #2C2C2E;
+  --color-border:    #38383A;
+  --color-primary:   #FFFFFF;
+  --color-accent:    #0A84FF;
+  --color-accent2:   #30D158;
+  --color-danger:    #FF453A;
+  --color-text:      #F2F2F7;
+  --color-text-soft: #98989F;
+  --color-text-muted:#58585F;
+  --color-ubw:       #0A84FF;
+  --color-lbw:       #30D158;
+  --color-fbw:       #FF9F0A;
+  --color-copy:      #30D158;
+
+  --radius-sm:   10px;
+  --radius-md:   14px;
+  --radius-lg:   20px;
+  --radius-xl:   26px;
+
+  --shadow-card: 0 2px 16px rgba(0,0,0,0.40), 0 1px 4px rgba(0,0,0,0.30);
+  --shadow-btn:  0 2px 10px rgba(0,0,0,0.40);
+
+  --font-main:   -apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:   'SF Mono', 'Fira Code', monospace;
+
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+}
+
+/* ---- Reset & Base ---- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Ekrany (SPA routing) ---- */
+.screen {
+  display: none;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+  animation: screenIn 0.22s ease;
+}
+
+.screen.active {
+  display: flex;
+}
+
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   EKRAN GŁÓWNY
+   ============================================================ */
+#screen-home {
+  background: var(--color-bg);
+  padding: 0;
+}
+
+.app-header {
+  text-align: center;
+  padding: 56px 24px 32px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-logo {
+  font-size: 52px;
+  line-height: 1;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 2px 10px rgba(0,0,0,0.50));
+}
+
+.app-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.app-subtitle {
+  font-size: 15px;
+  color: var(--color-text-soft);
+  font-weight: 400;
+}
+
+.home-plans {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 20px;
+}
+
+.plan-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 20px 20px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s;
+  box-shadow: var(--shadow-card);
+  width: 100%;
+  text-align: left;
+  -webkit-appearance: none;
+}
+
+.plan-card:active {
+  transform: scale(0.975);
+  background: var(--color-surface2);
+  box-shadow: none;
+}
+
+.plan-card__icon {
+  font-size: 32px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.plan-card__info {
+  flex: 1;
+}
+
+.plan-card__name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--color-text);
+}
+
+.plan-card__desc {
+  font-size: 13px;
+  color: var(--color-text-soft);
+  margin-top: 2px;
+}
+
+.plan-card__arrow {
+  font-size: 24px;
+  color: var(--color-text-muted);
+  font-weight: 300;
+  flex-shrink: 0;
+}
+
+/* Plan color accents */
+.plan-card[data-plan="UBW"] .plan-card__name { color: var(--color-ubw); }
+.plan-card[data-plan="LBW"] .plan-card__name { color: var(--color-lbw); }
+.plan-card[data-plan="FBW"] .plan-card__name { color: var(--color-fbw); }
+
+.home-footer {
+  text-align: center;
+  padding: 16px 24px calc(16px + var(--safe-bottom));
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ============================================================
+   NAGŁÓWEK NAWIGACJI
+   ============================================================ */
+.nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 14px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  min-height: 56px;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-accent);
+  cursor: pointer;
+  padding: 6px 0;
+  min-width: 72px;
+  text-align: left;
+  -webkit-appearance: none;
+  white-space: nowrap;
+}
+
+.btn-back:active { opacity: 0.6; }
+
+.nav-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.3px;
+  text-align: center;
+  flex: 1;
+}
+
+.nav-spacer {
+  min-width: 72px;
+}
+
+.btn-icon-action {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  min-width: 40px;
+  text-align: right;
+  -webkit-appearance: none;
+  transition: background 0.15s;
+}
+
+.btn-icon-action:active { background: var(--color-surface2); }
+
+/* ============================================================
+   EKRAN PLANU (lista dat)
+   ============================================================ */
+.plan-actions {
+  padding: 20px 20px 12px;
+}
+
+.dates-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 20px 20px;
+}
+
+.date-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 12px 14px 16px;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.13s ease, background 0.13s;
+  gap: 8px;
+}
+
+.date-card:active {
+  transform: scale(0.975);
+  background: var(--color-surface2);
+}
+
+.date-card__main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.date-card__icon {
+  font-size: 22px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.date-card__info {
+  min-width: 0;
+}
+
+.date-card__date {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.date-card__meta {
+  font-size: 12px;
+  color: var(--color-text-soft);
+  margin-top: 2px;
+}
+
+.date-card__arrow {
+  font-size: 20px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+/* Przyciski akcji na kafelku daty */
+.date-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.date-card__copy {
+  background: rgba(48, 209, 88, 0.12);
+  border: 1px solid rgba(48, 209, 88, 0.25);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--color-copy);
+  cursor: pointer;
+  padding: 6px 10px;
+  -webkit-appearance: none;
+  transition: background 0.13s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.date-card__copy:active {
+  background: rgba(48, 209, 88, 0.22);
+  transform: scale(0.95);
+}
+
+.date-card__delete {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px 6px;
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  line-height: 1;
+  -webkit-appearance: none;
+  transition: color 0.13s, background 0.13s;
+}
+
+.date-card__delete:active {
+  color: var(--color-danger);
+  background: rgba(255,69,58,0.10);
+}
+
+/* ============================================================
+   EKRAN TRENINGU (ćwiczenia)
+   ============================================================ */
+.workout-date-label {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-soft);
+  padding: 10px 20px 2px;
+  letter-spacing: 0.3px;
+}
+
+#exercises-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px 16px 0;
+}
+
+.workout-actions {
+  padding: 16px 16px 8px;
+}
+
+.bottom-spacer {
+  height: 24px;
+}
+
+/* ---- Karta ćwiczenia ---- */
+.exercise-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  animation: cardIn 0.2s ease;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.exercise-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface2);
+}
+
+.exercise-number {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.exercise-name-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  font-family: var(--font-main);
+  outline: none;
+  padding: 0;
+  min-width: 0;
+}
+
+.exercise-name-input::placeholder {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.exercise-delete-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  -webkit-appearance: none;
+  transition: color 0.13s, background 0.13s;
+}
+
+.exercise-delete-btn:active {
+  color: var(--color-danger);
+  background: rgba(255,69,58,0.10);
+}
+
+/* ---- Tabela serii ---- */
+.sets-table {
+  width: 100%;
+}
+
+.sets-table-header {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sets-table-header span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.sets-table-header span:last-child {
+  padding-left: 8px;
+}
+
+.set-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 36px;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 8px 0 14px;
+  transition: background 0.12s;
+  animation: rowIn 0.18s ease;
+}
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.set-row:last-of-type {
+  border-bottom: none;
+}
+
+.set-row:active { background: var(--color-surface2); }
+
+.set-number {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.set-weight-input {
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--color-text);
+  font-family: var(--font-main);
+  outline: none;
+  padding: 12px 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.set-weight-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.set-delete-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 8px 4px;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  -webkit-appearance: none;
+  transition: color 0.13s;
+  line-height: 1;
+  text-align: center;
+}
+
+.set-delete-btn:active { color: var(--color-danger); }
+
+/* ---- Stopka ćwiczenia ---- */
+.exercise-footer {
+  padding: 10px 14px;
+  border-top: 1px solid var(--color-border);
+}
+
+.btn-add-set {
+  background: none;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 9px 16px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.13s, border-color 0.13s;
+  -webkit-appearance: none;
+}
+
+.btn-add-set:active { background: rgba(10,132,255,0.08); border-color: var(--color-accent); }
+
+/* ============================================================
+   PRZYCISKI
+   ============================================================ */
+.btn-primary {
+  background: var(--color-accent);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 15px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.13s, transform 0.13s;
+  box-shadow: var(--shadow-btn);
+  -webkit-appearance: none;
+  font-family: var(--font-main);
+  letter-spacing: -0.2px;
+}
+
+.btn-primary:active { opacity: 0.82; transform: scale(0.98); }
+
+.btn-full { width: 100%; }
+
+.btn-secondary {
+  background: var(--color-surface2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 14px 24px;
+  cursor: pointer;
+  transition: background 0.13s;
+  -webkit-appearance: none;
+  font-family: var(--font-main);
+}
+
+.btn-secondary:active { background: var(--color-border); }
+
+.btn-danger {
+  background: var(--color-danger);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 14px 24px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  font-family: var(--font-main);
+  transition: opacity 0.13s;
+}
+
+.btn-danger:active { opacity: 0.82; }
+
+.btn-icon {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ============================================================
+   PUSTE STANY
+   ============================================================ */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  text-align: center;
+  color: var(--color-text-soft);
+}
+
+.empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  padding: 0 0 var(--safe-bottom);
+  animation: modalFadeIn 0.2s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-box {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  border-top: 1px solid var(--color-border);
+  padding: 28px 24px calc(28px + var(--safe-bottom));
+  width: 100%;
+  max-width: 540px;
+  animation: modalSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.modal-desc {
+  font-size: 14px;
+  color: var(--color-text-soft);
+  margin-bottom: 20px;
+}
+
+.date-input {
+  display: block;
+  width: 100%;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-family: var(--font-main);
+  padding: 14px 16px;
+  background: var(--color-surface2);
+  color: var(--color-text);
+  margin-bottom: 20px;
+  outline: none;
+  transition: border-color 0.15s;
+  color-scheme: dark;
+}
+
+.date-input:focus {
+  border-color: var(--color-accent);
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+  position: fixed;
+  bottom: calc(24px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(44, 44, 46, 0.95);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 11px 22px;
+  border-radius: 100px;
+  z-index: 2000;
+  white-space: nowrap;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.50);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: toastIn 0.2s ease;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ============================================================
+   RESPONSIVE / TABLET
+   ============================================================ */
+@media (min-width: 480px) {
+  .home-plans { padding: 32px 32px; }
+  #exercises-container { padding: 14px 24px 0; }
+  .workout-actions { padding: 16px 24px 8px; }
+  .plan-actions { padding: 24px 24px 12px; }
+  .dates-list { padding: 0 24px 24px; }
+}
+
+/* ============================================================
+   SCROLLBAR (WebKit)
+   ============================================================ */
+::-webkit-scrollbar { width: 0; background: transparent; }
+
+/* ============================================================
+   SELEKCJA
+   ============================================================ */
+::selection { background: rgba(10,132,255,0.30); }
+
+/* ============================================================
+   SZABLONY – kafelek na ekranie głównym
+   ============================================================ */
+.plan-card--templates .plan-card__name--template {
+  color: #BF5AF2;  /* fiolet – odróżnia od UBW/LBW/FBW */
+}
+
+/* ============================================================
+   BADGE PLANU (UBW / LBW / FBW) na liście szablonów
+   ============================================================ */
+.plan-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.plan-badge--UBW {
+  background: rgba(10, 132, 255, 0.18);
+  color: var(--color-ubw);
+  border: 1px solid rgba(10, 132, 255, 0.30);
+}
+.plan-badge--LBW {
+  background: rgba(48, 209, 88, 0.18);
+  color: var(--color-lbw);
+  border: 1px solid rgba(48, 209, 88, 0.30);
+}
+.plan-badge--FBW {
+  background: rgba(255, 159, 10, 0.18);
+  color: var(--color-fbw);
+  border: 1px solid rgba(255, 159, 10, 0.30);
+}
+
+/* ============================================================
+   EKRAN EDYCJI SZABLONU
+   ============================================================ */
+.template-edit-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px 0;
+  gap: 0;
+  overflow-y: auto;
+}
+
+/* Grupa pola formularza */
+.field-group {
+  margin-bottom: 22px;
+}
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.field-input {
+  display: block;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-family: var(--font-main);
+  color: var(--color-text);
+  padding: 13px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field-input:focus { border-color: var(--color-accent); }
+.field-input::placeholder { color: var(--color-text-muted); }
+
+/* Picker: UBW / LBW / FBW */
+.plan-type-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.plan-type-btn {
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-soft);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-main);
+  padding: 13px 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  -webkit-appearance: none;
+}
+
+.plan-type-btn:active { opacity: 0.75; }
+
+.plan-type-btn--active[data-type="UBW"] {
+  background: rgba(10,132,255,0.15);
+  border-color: var(--color-ubw);
+  color: var(--color-ubw);
+}
+.plan-type-btn--active[data-type="LBW"] {
+  background: rgba(48,209,88,0.15);
+  border-color: var(--color-lbw);
+  color: var(--color-lbw);
+}
+.plan-type-btn--active[data-type="FBW"] {
+  background: rgba(255,159,10,0.15);
+  border-color: var(--color-fbw);
+  color: var(--color-fbw);
+}
+
+/* ---- Wiersze ćwiczeń w szablonie ---- */
+.tpl-exercises-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tpl-ex-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 12px 12px 14px;
+  animation: cardIn 0.18s ease;
+}
+
+.tpl-ex-row__num {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  padding-top: 14px;
+  white-space: nowrap;
+  min-width: 36px;
+}
+
+.tpl-ex-row__fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tpl-ex-name {
+  /* dziedziczy .field-input */
+}
+
+/* Kontrolka liczby serii – stepper */
+.tpl-ex-sets-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tpl-sets-label {
+  font-size: 13px;
+  color: var(--color-text-soft);
+}
+
+.tpl-sets-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--color-surface2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.stepper-btn {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font-size: 20px;
+  font-weight: 400;
+  width: 40px;
+  height: 38px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-appearance: none;
+  transition: background 0.12s;
+  line-height: 1;
+}
+.stepper-btn:active { background: var(--color-border); }
+
+.stepper-val {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  min-width: 28px;
+  text-align: center;
+}
+
+/* Usuń ćwiczenie z szablonu */
+.tpl-ex-del {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px 4px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-top: 4px;
+  -webkit-appearance: none;
+  transition: color 0.13s;
+}
+.tpl-ex-del:active { color: var(--color-danger); }
+
+/* Przycisk Zapisz plan */
+.template-edit-actions {
+  padding: 8px 0 16px;
+}
+
+/* ============================================================
+   MODAL: użyj szablonu – badge w opisie
+   ============================================================ */
+#use-template-desc strong {
+  color: var(--color-text);
+}
