@@ -216,6 +216,24 @@
   </div>
 </div>
 
+<!-- ===================== MODAL: eksport tekstowy ===================== -->
+<div id="modal-export" class="modal-overlay modal-overlay--tall" style="display:none;" onclick="App.closeExportModal(event)">
+  <div class="modal-box modal-box--tall">
+    <div class="export-header">
+      <div>
+        <h3 class="modal-title">✏️ Eksport treningu</h3>
+        <p class="modal-desc" id="export-title" style="margin-bottom:0;"></p>
+      </div>
+      <button class="export-close-btn" onclick="App.closeExportModal()">✕</button>
+    </div>
+    <textarea id="export-text" class="export-textarea" readonly onclick="App.selectAllExport()"></textarea>
+    <div class="export-actions">
+      <button class="btn-secondary" onclick="App.selectAllExport()">Zaznacz wszystko</button>
+      <button class="btn-primary" onclick="App.copyExportText()">📋 Kopiuj</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== TOAST ===================== -->
 <div id="toast" class="toast" style="display:none;"></div>
 

@@ -1,8 +1,8 @@
 /**
  * ============================================================
  *  TRENING PWA – app.js
- *  UBW / LBW / FBW + Szablony treningów
- *  Dane: localStorage
+ *  UBW / LBW / FBW + Szablony + Eksport tekstowy
+ *  Serie: osobne pola reps (powtórzenia) i weight (ciężar)
  * ============================================================
  */
 
@@ -17,9 +17,19 @@ const Storage = {
   load() {
     try {
       const raw = localStorage.getItem(this.KEY);
-      const db = raw ? JSON.parse(raw) : this._defaultDB();
-      // Upewnij się, że pole templates istnieje (migracja starych danych)
+      const db  = raw ? JSON.parse(raw) : this._defaultDB();
       if (!db.templates) db.templates = [];
+      // Migracja starych serii: {weight: "10 x 30 kg"} → {reps: "", weight: "10 x 30 kg"}
+      ['UBW','LBW','FBW'].forEach(plan => {
+        const workouts = db.plans[plan]?.workouts || {};
+        Object.values(workouts).forEach(w => {
+          (w.exercises || []).forEach(ex => {
+            (ex.sets || []).forEach(set => {
+              if (!('reps' in set)) set.reps = '';
+            });
+          });
+        });
+      });
       return db;
     } catch {
       return this._defaultDB();
@@ -41,7 +51,7 @@ const Storage = {
         LBW: { workouts: {} },
         FBW: { workouts: {} }
       },
-      templates: []   // lista szablonów treningów
+      templates: []
     };
   }
 };
@@ -50,15 +60,14 @@ const Storage = {
    APP
    ============================================================ */
 const App = {
-  /* ---- stan ---- */
-  currentPlan:      null,   // 'UBW' | 'LBW' | 'FBW'
-  currentDate:      null,   // 'YYYY-MM-DD'
-  db:               null,
-  _toastTimer:      null,
-  _pendingConfirm:  null,
-  _copySourceDate:  null,
-  _editingTemplateId: null, // id edytowanego szablonu (null = nowy)
-  _useTemplateId:   null,   // id szablonu do użycia
+  currentPlan:        null,
+  currentDate:        null,
+  db:                 null,
+  _toastTimer:        null,
+  _pendingConfirm:    null,
+  _copySourceDate:    null,
+  _editingTemplateId: null,
+  _useTemplateId:     null,
 
   /* ============================================================
      INICJALIZACJA
@@ -110,10 +119,9 @@ const App = {
     document.getElementById('plan-title').textContent = this.currentPlan;
 
     const workouts = this.db.plans[this.currentPlan].workouts;
-    const dates = Object.keys(workouts).sort((a, b) => b.localeCompare(a));
-
-    const list  = document.getElementById('dates-list');
-    const empty = document.getElementById('dates-empty');
+    const dates    = Object.keys(workouts).sort((a, b) => b.localeCompare(a));
+    const list     = document.getElementById('dates-list');
+    const empty    = document.getElementById('dates-empty');
     list.innerHTML = '';
 
     if (dates.length === 0) {
@@ -127,7 +135,7 @@ const App = {
     dates.forEach(dateKey => {
       const workout = workouts[dateKey];
       const exCount = (workout.exercises || []).length;
-      const card = document.createElement('div');
+      const card    = document.createElement('div');
       card.className = 'date-card';
       card.innerHTML = `
         <div class="date-card__main" onclick="App.openWorkout('${dateKey}')">
@@ -139,7 +147,8 @@ const App = {
         </div>
         <div class="date-card__arrow" onclick="App.openWorkout('${dateKey}')">›</div>
         <div class="date-card__actions">
-          <button class="date-card__copy" onclick="App.openCopyModal('${dateKey}')">KOPIUJ</button>
+          <button class="date-card__export" onclick="App.openExport('${dateKey}')" title="Eksportuj trening">✏️</button>
+          <button class="date-card__copy"   onclick="App.openCopyModal('${dateKey}')">KOPIUJ</button>
           <button class="date-card__delete" onclick="App._confirmDeleteDate('${dateKey}')">✕</button>
         </div>`;
       list.appendChild(card);
@@ -158,7 +167,6 @@ const App = {
   confirmAddDate() {
     const dateKey = document.getElementById('date-input').value;
     if (!dateKey) { this._toast('Wybierz datę treningu'); return; }
-
     const workouts = this.db.plans[this.currentPlan].workouts;
     if (!workouts[dateKey]) {
       workouts[dateKey] = { exercises: [] };
@@ -184,7 +192,7 @@ const App = {
       this._toast('Trening usunięty');
     };
     document.getElementById('confirm-title').textContent = 'Usuń trening';
-    document.getElementById('confirm-desc').textContent =
+    document.getElementById('confirm-desc').textContent  =
       `Czy na pewno chcesz usunąć trening z dnia ${this._formatDate(dateKey)}?`;
     document.getElementById('confirm-btn').onclick = () => {
       this._pendingConfirm && this._pendingConfirm();
@@ -200,11 +208,76 @@ const App = {
   },
 
   /* ============================================================
+     EKSPORT TEKSTOWY
+     ============================================================ */
+  openExport(dateKey) {
+    const workout = this.db.plans[this.currentPlan].workouts[dateKey];
+    if (!workout) return;
+
+    // Buduj tekst eksportu
+    const lines = [];
+    lines.push(`${this.currentPlan} – ${this._formatDate(dateKey)}`);
+    lines.push('═'.repeat(32));
+
+    (workout.exercises || []).forEach((ex, i) => {
+      lines.push(`\n${i + 1}. ${ex.name || '(bez nazwy)'}`);
+      (ex.sets || []).forEach((set, si) => {
+        const reps   = set.reps   || '–';
+        const weight = set.weight || '–';
+        lines.push(`   Seria ${si + 1}: ${reps} powt. × ${weight}`);
+      });
+    });
+
+    if ((workout.exercises || []).length === 0) {
+      lines.push('\n(brak ćwiczeń)');
+    }
+
+    lines.push('\n' + '─'.repeat(32));
+    lines.push(`Eksport: ${new Date().toLocaleString('pl-PL')}`);
+
+    document.getElementById('export-text').value = lines.join('\n');
+    document.getElementById('export-title').textContent =
+      `${this.currentPlan} · ${this._formatDate(dateKey)}`;
+    document.getElementById('modal-export').style.display = 'flex';
+  },
+
+  closeExportModal(event) {
+    if (event && event.target !== document.getElementById('modal-export')) return;
+    document.getElementById('modal-export').style.display = 'none';
+  },
+
+  copyExportText() {
+    const ta = document.getElementById('export-text');
+    ta.select();
+    ta.setSelectionRange(0, 99999); // mobile
+    try {
+      // Nowoczesne API
+      navigator.clipboard.writeText(ta.value).then(() => {
+        this._toast('Skopiowano do schowka ✓');
+      }).catch(() => {
+        // Fallback
+        document.execCommand('copy');
+        this._toast('Skopiowano do schowka ✓');
+      });
+    } catch {
+      document.execCommand('copy');
+      this._toast('Skopiowano do schowka ✓');
+    }
+  },
+
+  selectAllExport() {
+    const ta = document.getElementById('export-text');
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+  },
+
+  /* ============================================================
      EKRAN TRENINGU – ćwiczenia
      ============================================================ */
   openWorkout(dateKey) {
     this.currentDate = dateKey;
-    document.getElementById('workout-title').textContent = this.currentPlan;
+    document.getElementById('workout-title').textContent     = this.currentPlan;
     document.getElementById('workout-date-label').textContent =
       this.currentPlan + ' · ' + this._formatDate(dateKey);
     this._renderWorkout();
@@ -212,10 +285,10 @@ const App = {
   },
 
   _renderWorkout() {
-    const workout    = this._currentWorkout();
-    const exercises  = workout.exercises || [];
-    const container  = document.getElementById('exercises-container');
-    const empty      = document.getElementById('exercises-empty');
+    const workout   = this._currentWorkout();
+    const exercises = workout.exercises || [];
+    const container = document.getElementById('exercises-container');
+    const empty     = document.getElementById('exercises-empty');
     container.innerHTML = '';
 
     if (exercises.length === 0) {
@@ -235,23 +308,23 @@ const App = {
     const card = document.createElement('div');
     card.className = 'exercise-card';
 
-    // nagłówek
+    // --- nagłówek ---
     const header = document.createElement('div');
     header.className = 'exercise-header';
     header.innerHTML = `<span class="exercise-number">Ćw. ${exIndex + 1}</span>`;
 
     const nameInput = document.createElement('input');
-    nameInput.type = 'text';
-    nameInput.className = 'exercise-name-input';
+    nameInput.type        = 'text';
+    nameInput.className   = 'exercise-name-input';
     nameInput.placeholder = 'Nazwa ćwiczenia…';
-    nameInput.value = exercise.name || '';
+    nameInput.value       = exercise.name || '';
     nameInput.addEventListener('change', () => {
       this._currentWorkout().exercises[exIndex].name = nameInput.value.trim();
       Storage.save(this.db);
     });
 
     const delBtn = document.createElement('button');
-    delBtn.className = 'exercise-delete-btn';
+    delBtn.className  = 'exercise-delete-btn';
     delBtn.textContent = '✕';
     delBtn.addEventListener('click', () => this._confirmDeleteExercise(exIndex));
 
@@ -259,17 +332,22 @@ const App = {
     header.appendChild(delBtn);
     card.appendChild(header);
 
-    // tabela serii
+    // --- tabela serii ---
     const table = document.createElement('div');
     table.className = 'sets-table';
+
+    // nagłówek kolumn: SERIA | POWT. | CIĘŻAR | (usuń)
     const th = document.createElement('div');
     th.className = 'sets-table-header';
-    th.innerHTML = '<span>SERIA</span><span>CIĘŻARY / WYNIK</span>';
+    th.innerHTML = '<span>SERIA</span><span>POWT.</span><span>CIĘŻAR</span>';
     table.appendChild(th);
-    (exercise.sets || []).forEach((set, si) => table.appendChild(this._buildSetRow(set, exIndex, si)));
+
+    (exercise.sets || []).forEach((set, si) =>
+      table.appendChild(this._buildSetRow(set, exIndex, si))
+    );
     card.appendChild(table);
 
-    // stopka
+    // --- stopka ---
     const footer = document.createElement('div');
     footer.className = 'exercise-footer';
     const addSetBtn = document.createElement('button');
@@ -282,39 +360,65 @@ const App = {
     return card;
   },
 
+  /* ============================================================
+     WIERSZ SERII – dwa pola: reps + weight
+     ============================================================ */
   _buildSetRow(set, exIndex, setIndex) {
     const row = document.createElement('div');
     row.className = 'set-row';
 
+    // numer serii
     const num = document.createElement('div');
-    num.className = 'set-number';
+    num.className   = 'set-number';
     num.textContent = setIndex + 1;
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.inputMode = 'text';
-    input.className = 'set-weight-input';
-    input.placeholder = 'np. 10 × 30 kg';
-    input.value = set.weight || '';
-    input.addEventListener('change', () => {
-      this._currentWorkout().exercises[exIndex].sets[setIndex].weight = input.value.trim();
+    // pole: powtórzenia
+    const repsInput = document.createElement('input');
+    repsInput.type        = 'number';
+    repsInput.inputMode   = 'numeric';
+    repsInput.className   = 'set-reps-input';
+    repsInput.placeholder = 'np. 10';
+    repsInput.min         = '0';
+    repsInput.value       = set.reps || '';
+    repsInput.addEventListener('change', () => {
+      this._currentWorkout().exercises[exIndex].sets[setIndex].reps = repsInput.value.trim();
       Storage.save(this.db);
     });
 
+    // separator ×
+    const sep = document.createElement('span');
+    sep.className   = 'set-separator';
+    sep.textContent = '×';
+
+    // pole: ciężar
+    const weightInput = document.createElement('input');
+    weightInput.type        = 'text';
+    weightInput.inputMode   = 'decimal';
+    weightInput.className   = 'set-weight-input';
+    weightInput.placeholder = 'kg';
+    weightInput.value       = set.weight || '';
+    weightInput.addEventListener('change', () => {
+      this._currentWorkout().exercises[exIndex].sets[setIndex].weight = weightInput.value.trim();
+      Storage.save(this.db);
+    });
+
+    // przycisk usuń serię
     const del = document.createElement('button');
-    del.className = 'set-delete-btn';
+    del.className   = 'set-delete-btn';
     del.textContent = '−';
     del.addEventListener('click', () => this.deleteSet(exIndex, setIndex));
 
     row.appendChild(num);
-    row.appendChild(input);
+    row.appendChild(repsInput);
+    row.appendChild(sep);
+    row.appendChild(weightInput);
     row.appendChild(del);
     return row;
   },
 
   addExercise() {
     const workout = this._currentWorkout();
-    workout.exercises.push({ name: '', sets: [{ weight: '' }] });
+    workout.exercises.push({ name: '', sets: [{ reps: '', weight: '' }] });
     Storage.save(this.db);
 
     document.getElementById('exercises-empty').style.display = 'none';
@@ -347,7 +451,7 @@ const App = {
   },
 
   addSet(exIndex) {
-    this._currentWorkout().exercises[exIndex].sets.push({ weight: '' });
+    this._currentWorkout().exercises[exIndex].sets.push({ reps: '', weight: '' });
     Storage.save(this.db);
 
     const container = document.getElementById('exercises-container');
@@ -355,8 +459,9 @@ const App = {
     const newCard   = this._buildExerciseCard(this._currentWorkout().exercises[exIndex], exIndex);
     container.replaceChild(newCard, oldCard);
 
-    const inputs = newCard.querySelectorAll('.set-weight-input');
-    setTimeout(() => inputs[inputs.length - 1]?.focus(), 60);
+    // fokus na polu reps ostatniej serii
+    const repsInputs = newCard.querySelectorAll('.set-reps-input');
+    setTimeout(() => repsInputs[repsInputs.length - 1]?.focus(), 60);
   },
 
   deleteSet(exIndex, setIndex) {
@@ -402,7 +507,7 @@ const App = {
     workouts[targetDate] = {
       exercises: (src.exercises || []).map(ex => ({
         name: ex.name,
-        sets: (ex.sets || []).map(() => ({ weight: '' }))
+        sets: (ex.sets || []).map(() => ({ reps: '', weight: '' }))
       }))
     };
     Storage.save(this.db);
@@ -458,9 +563,8 @@ const App = {
     empty.style.display = 'none';
 
     templates.forEach(tpl => {
-      const exCount  = (tpl.exercises || []).length;
-      const typeColor = this._planColor(tpl.planType);
-      const card = document.createElement('div');
+      const exCount = (tpl.exercises || []).length;
+      const card    = document.createElement('div');
       card.className = 'date-card';
       card.innerHTML = `
         <div class="date-card__main" onclick="App.openUseTemplateModal('${tpl.id}')">
@@ -475,7 +579,8 @@ const App = {
         </div>
         <div class="date-card__arrow" onclick="App.openUseTemplateModal('${tpl.id}')">›</div>
         <div class="date-card__actions">
-          <button class="date-card__copy" style="color:var(--color-accent);border-color:rgba(10,132,255,0.25);background:rgba(10,132,255,0.10);"
+          <button class="date-card__copy"
+            style="color:var(--color-accent);border-color:rgba(10,132,255,0.25);background:rgba(10,132,255,0.10);"
             onclick="App.openEditTemplateScreen('${tpl.id}')">EDYTUJ</button>
           <button class="date-card__delete" onclick="App._confirmDeleteTemplate('${tpl.id}')">✕</button>
         </div>`;
@@ -484,38 +589,32 @@ const App = {
   },
 
   /* ============================================================
-     SZABLONY – ekran tworzenia / edycji
+     SZABLONY – tworzenie / edycja
      ============================================================ */
   openNewTemplateScreen() {
     this._editingTemplateId = null;
     document.getElementById('template-edit-title').textContent = 'Nowy plan';
     document.getElementById('tpl-name').value = '';
-    this._selectTemplateType(null);           // odznacz wszystkie
+    this._selectTemplateType(null);
     document.getElementById('tpl-exercises-container').innerHTML = '';
-    this.addTemplateExercise();               // zacznij z jednym pustym
+    this.addTemplateExercise();
     this._showScreen('screen-template-edit');
   },
 
   openEditTemplateScreen(id) {
     const tpl = this.db.templates.find(t => t.id === id);
     if (!tpl) return;
-
     this._editingTemplateId = id;
     document.getElementById('template-edit-title').textContent = 'Edytuj plan';
     document.getElementById('tpl-name').value = tpl.name;
     this._selectTemplateType(tpl.planType);
-
     const container = document.getElementById('tpl-exercises-container');
     container.innerHTML = '';
     (tpl.exercises || []).forEach(ex => this._appendTemplateExerciseRow(ex.name, ex.sets));
-
     this._showScreen('screen-template-edit');
   },
 
-  /* Zaznacz przycisk typu planu */
-  selectTemplateType(type) {
-    this._selectTemplateType(type);
-  },
+  selectTemplateType(type) { this._selectTemplateType(type); },
 
   _selectTemplateType(type) {
     document.querySelectorAll('.plan-type-btn').forEach(btn => {
@@ -528,15 +627,12 @@ const App = {
     return active ? active.dataset.type : null;
   },
 
-  /* Dodaj wiersz ćwiczenia w formularzu szablonu */
-  addTemplateExercise() {
-    this._appendTemplateExerciseRow('', 3);
-  },
+  addTemplateExercise() { this._appendTemplateExerciseRow('', 3); },
 
   _appendTemplateExerciseRow(name = '', sets = 3) {
     const container = document.getElementById('tpl-exercises-container');
-    const idx  = container.querySelectorAll('.tpl-ex-row').length;
-    const row  = document.createElement('div');
+    const idx = container.querySelectorAll('.tpl-ex-row').length;
+    const row = document.createElement('div');
     row.className = 'tpl-ex-row';
     row.innerHTML = `
       <div class="tpl-ex-row__num">Ćw. ${idx + 1}</div>
@@ -554,7 +650,6 @@ const App = {
       </div>
       <button type="button" class="tpl-ex-del" onclick="App._removeTemplateExerciseRow(this)">✕</button>`;
     container.appendChild(row);
-    // Renumeruj po dodaniu
     this._renumberTemplateRows();
   },
 
@@ -576,19 +671,16 @@ const App = {
 
   _renumberTemplateRows() {
     document.querySelectorAll('.tpl-ex-row').forEach((row, i) => {
-      const numEl = row.querySelector('.tpl-ex-row__num');
-      if (numEl) numEl.textContent = `Ćw. ${i + 1}`;
+      const n = row.querySelector('.tpl-ex-row__num');
+      if (n) n.textContent = `Ćw. ${i + 1}`;
     });
   },
 
-  /* Zapisz szablon */
   saveTemplate() {
     const name = document.getElementById('tpl-name').value.trim();
     if (!name) { this._toast('Wpisz nazwę planu'); return; }
-
     const planType = this._getSelectedType();
     if (!planType) { this._toast('Wybierz typ planu (UBW / LBW / FBW)'); return; }
-
     const rows = document.querySelectorAll('.tpl-ex-row');
     if (rows.length === 0) { this._toast('Dodaj co najmniej jedno ćwiczenie'); return; }
 
@@ -603,19 +695,11 @@ const App = {
     if (!valid) return;
 
     if (this._editingTemplateId) {
-      // Aktualizuj istniejący
       const tpl = this.db.templates.find(t => t.id === this._editingTemplateId);
       if (tpl) { tpl.name = name; tpl.planType = planType; tpl.exercises = exercises; }
     } else {
-      // Nowy szablon
-      this.db.templates.push({
-        id:        'tpl_' + Date.now(),
-        name,
-        planType,
-        exercises
-      });
+      this.db.templates.push({ id: 'tpl_' + Date.now(), name, planType, exercises });
     }
-
     Storage.save(this.db);
     this._toast(this._editingTemplateId ? 'Plan zaktualizowany' : 'Plan zapisany');
     this._editingTemplateId = null;
@@ -644,19 +728,17 @@ const App = {
   },
 
   /* ============================================================
-     SZABLONY – użyj (wybór daty → utwórz trening)
+     SZABLONY – użyj
      ============================================================ */
   openUseTemplateModal(id) {
     const tpl = this.db.templates.find(t => t.id === id);
     if (!tpl) return;
     this._useTemplateId = id;
-
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('use-template-date').value = today;
     document.getElementById('use-template-desc').innerHTML =
       `Tworzysz trening <strong>${this._esc(tpl.name)}</strong>` +
       ` <span class="plan-badge plan-badge--${tpl.planType}">${tpl.planType}</span>`;
-
     document.getElementById('modal-use-template').style.display = 'flex';
   },
 
@@ -669,31 +751,23 @@ const App = {
   confirmUseTemplate() {
     const dateKey = document.getElementById('use-template-date').value;
     if (!dateKey) { this._toast('Wybierz datę treningu'); return; }
-
     const tpl = this.db.templates.find(t => t.id === this._useTemplateId);
     if (!tpl) { this._toast('Błąd: nie znaleziono planu'); return; }
 
-    // Utwórz trening w odpowiednim planie (UBW/LBW/FBW)
     const workouts = this.db.plans[tpl.planType].workouts;
     const existed  = !!workouts[dateKey];
-
-    // Każde ćwiczenie dostaje tyle pustych serii, ile zdefiniowano w szablonie
     workouts[dateKey] = {
       exercises: tpl.exercises.map(ex => ({
         name: ex.name,
-        sets: Array.from({ length: ex.sets }, () => ({ weight: '' }))
+        sets: Array.from({ length: ex.sets }, () => ({ reps: '', weight: '' }))
       }))
     };
     Storage.save(this.db);
-
     document.getElementById('modal-use-template').style.display = 'none';
     this._useTemplateId = null;
-
     this._toast(existed
       ? `Trening nadpisany (${this._formatDate(dateKey)})`
       : `Trening utworzony: ${this._formatDate(dateKey)}`);
-
-    // Przejdź bezpośrednio do treningu
     this.currentPlan = tpl.planType;
     this._renderPlanScreen();
     this.openWorkout(dateKey);
@@ -721,25 +795,19 @@ const App = {
     return { UBW: 'var(--color-ubw)', LBW: 'var(--color-lbw)', FBW: 'var(--color-fbw)' }[type] || '#fff';
   },
 
-  /** Escape HTML w stringu (zabezpieczenie przed XSS w innerHTML) */
   _esc(str) {
     return String(str || '')
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;');
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   },
 
   _toast(msg) {
     const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.style.display = 'block';
+    el.textContent    = msg;
+    el.style.display  = 'block';
     clearTimeout(this._toastTimer);
     this._toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2400);
   }
 };
 
-/* ============================================================
-   URUCHOM
-   ============================================================ */
 document.addEventListener('DOMContentLoaded', () => App.init());
