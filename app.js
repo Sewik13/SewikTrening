@@ -361,19 +361,19 @@ const App = {
     });
   },
   _cw() { return this.db.plans[this.plan].workouts[this.date]; },
-  _renderWorkout() {
+  _renderWorkout(mode='update') {
     const exs = this._cw().exercises||[];
     const cont = document.getElementById('exercises-container');
     const empty = document.getElementById('exercises-empty');
     cont.innerHTML='';
     if (!exs.length) { cont.style.display='none'; empty.style.display='flex'; return; }
     cont.style.display='flex'; empty.style.display='none';
-    exs.forEach((ex,i)=>cont.appendChild(this._buildCard(ex,i)));
+    exs.forEach((ex,i)=>cont.appendChild(this._buildCard(ex,i,mode)));
     this._initDnd();
   },
 
   /* EXERCISE CARD */
-  _buildCard(ex, idx) {
+  _buildCard(ex, idx, mode='update') {
     const card = document.createElement('div');
     card.className = 'exercise-card' + (ex.superSet?' exercise-card--ss':'');
     card.dataset.idx = idx;
@@ -413,7 +413,7 @@ const App = {
     (ex.sets||[]).forEach((s,si)=>tbl.appendChild(this._buildRow(s,idx,si)));
     card.appendChild(tbl);
 
-    card.appendChild(this._buildVolBar(ex,idx));
+    card.appendChild(this._buildVolBar(ex,idx,mode));
 
     const foot = document.createElement('div'); foot.className='exercise-footer';
     const addBtn = document.createElement('button'); addBtn.className='btn-add-set';
@@ -502,7 +502,7 @@ const App = {
     this._confirm('Usuń ćwiczenie',`Usunąć "${name}"?`, ()=>{
       this._cw().exercises.splice(idx,1);
       this._rebuildAllRecords();
-      this._renderWorkout(); this._toast('Ćwiczenie usunięte');
+      this._renderWorkout('check'); this._toast('Ćwiczenie usunięte');
     });
   },
 
@@ -519,13 +519,13 @@ const App = {
     if (sets.length<=1) { this._toast('Minimalna liczba serii to 1'); return; }
     sets.splice(setIdx,1);
     this._rebuildAllRecords();
-    this._rebuildCard(exIdx);
+    this._rebuildCard(exIdx, 'check');
   },
 
-  _rebuildCard(exIdx) {
+  _rebuildCard(exIdx, mode='update') {
     const cont = document.getElementById('exercises-container');
     const old = cont.querySelectorAll('.exercise-card')[exIdx];
-    const nw = this._buildCard(this._cw().exercises[exIdx],exIdx);
+    const nw = this._buildCard(this._cw().exercises[exIdx], exIdx, mode);
     cont.replaceChild(nw,old); this._initDnd();
   },
 
@@ -545,31 +545,34 @@ const App = {
   },
 
   /**
-   * Aktualizuje rekordy w bazie jeśli nowe wartości są wyższe.
-   * Zawsze zwraca czy AKTUALNE wartości są na poziomie rekordu (>=),
-   * dzięki czemu badge pojawia się też przy ponownym otwarciu.
+   * Sprawdza czy wartości ćwiczenia są rekordowe.
+   * Tryb 'check' — tylko porównuje, nie nadpisuje (używany przy renderowaniu po rebuild).
+   * Tryb 'update' — aktualizuje rekord jeśli wyższy (używany przy wpisywaniu na żywo).
    */
-  _updateRec(name,sets) {
-    const key=(name||'').trim().toLowerCase(); if(!key) return {prVol:false,prW:false};
-    const {total,detail}=this._calcVol(sets);
-    const maxW=Math.max(0,...detail.map(d=>d.w));
-    const rec=this.db.records[key]||{maxWeight:0,maxVolume:0};
+  _updateRec(name, sets, mode='update') {
+    const key = (name||'').trim().toLowerCase();
+    if (!key) return {prVol:false, prW:false};
 
-    // Zaktualizuj rekord jeśli nowa wartość jest wyższa
-    let changed=false;
-    if(maxW>0  && maxW>rec.maxWeight)  { rec.maxWeight=maxW;   changed=true; }
-    if(total>0 && total>rec.maxVolume) { rec.maxVolume=total;  changed=true; }
-    this.db.records[key]=rec;
-    if(changed) DB.save(this.db);
+    const {total, detail} = this._calcVol(sets);
+    const maxW = Math.max(0, ...detail.map(d=>d.w));
+    const rec  = this.db.records[key] || {maxWeight:0, maxVolume:0};
 
-    // Pokaż badge gdy aktualna wartość RÓWNA SIĘ lub PRZEWYŻSZA rekord
-    // (>= żeby badge był widoczny przy ponownym otwarciu, nie tylko przy biciu rekordu)
-    const prW   = maxW>0   && rec.maxWeight>0  && maxW   >= rec.maxWeight;
-    const prVol = total>0  && rec.maxVolume>0  && total  >= rec.maxVolume;
+    if (mode === 'update') {
+      // Aktualizuj tylko w górę
+      let changed = false;
+      if (maxW  > 0 && maxW  > rec.maxWeight) { rec.maxWeight = maxW;  changed = true; }
+      if (total > 0 && total > rec.maxVolume) { rec.maxVolume = total; changed = true; }
+      this.db.records[key] = rec;
+      if (changed) DB.save(this.db);
+    }
+
+    // Badge gdy wartość >= aktualny rekord
+    const prW   = maxW  > 0 && rec.maxWeight > 0 && maxW  >= rec.maxWeight;
+    const prVol = total > 0 && rec.maxVolume > 0 && total >= rec.maxVolume;
     return {prVol, prW};
   },
 
-  _buildVolBar(ex,idx) {
+  _buildVolBar(ex, idx, mode='update') {
     const sets=ex.sets||[];
     const {total,detail,hasData}=this._calcVol(sets);
     const bar=document.createElement('div'); bar.className='volume-bar';
@@ -577,7 +580,7 @@ const App = {
       bar.innerHTML=`<div class="vol-header"><span class="vol-label">OBJĘTOŚĆ</span><span class="vol-empty-txt">Wpisz dane</span></div>`;
       return bar;
     }
-    const {prVol,prW}=this._updateRec(ex.name,sets);
+    const {prVol,prW}=this._updateRec(ex.name, sets, mode);
     const volBadge=prVol?'<span class="pr-badge">🚀 PR</span>':'';
     const wBadge=prW?'<span class="pr-badge pr-badge--w">🚀 CIĘŻAR</span>':'';
     const rowsHTML=detail.map((d,i)=>{
@@ -590,11 +593,11 @@ const App = {
       <div class="vol-rows">${rowsHTML}</div>`;
     return bar;
   },
-  _refreshVol(card,exIdx) {
+  _refreshVol(card, exIdx) {
     if(!card) return;
     const ex=this._cw().exercises[exIdx];
     const old=card.querySelector('.volume-bar');
-    const nw=this._buildVolBar(ex,exIdx);
+    const nw=this._buildVolBar(ex, exIdx, 'update');
     if(old) card.replaceChild(nw,old);
     else card.insertBefore(nw,card.querySelector('.exercise-footer'));
   },
