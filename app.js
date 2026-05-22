@@ -514,18 +514,32 @@ const App = {
     });
     return {total,detail,hasData};
   },
+
+  /**
+   * Aktualizuje rekordy w bazie jeśli nowe wartości są wyższe.
+   * Zawsze zwraca czy AKTUALNE wartości są na poziomie rekordu (>=),
+   * dzięki czemu badge pojawia się też przy ponownym otwarciu.
+   */
   _updateRec(name,sets) {
     const key=(name||'').trim().toLowerCase(); if(!key) return {prVol:false,prW:false};
     const {total,detail}=this._calcVol(sets);
     const maxW=Math.max(0,...detail.map(d=>d.w));
     const rec=this.db.records[key]||{maxWeight:0,maxVolume:0};
-    const prW=maxW>0&&maxW>rec.maxWeight, prVol=total>0&&total>rec.maxVolume;
-    if(prW)   rec.maxWeight=maxW;
-    if(prVol) rec.maxVolume=total;
+
+    // Zaktualizuj rekord jeśli nowa wartość jest wyższa
+    let changed=false;
+    if(maxW>0  && maxW>rec.maxWeight)  { rec.maxWeight=maxW;   changed=true; }
+    if(total>0 && total>rec.maxVolume) { rec.maxVolume=total;  changed=true; }
     this.db.records[key]=rec;
-    if(prW||prVol) DB.save(this.db);
-    return {prVol,prW};
+    if(changed) DB.save(this.db);
+
+    // Pokaż badge gdy aktualna wartość RÓWNA SIĘ lub PRZEWYŻSZA rekord
+    // (>= żeby badge był widoczny przy ponownym otwarciu, nie tylko przy biciu rekordu)
+    const prW   = maxW>0   && rec.maxWeight>0  && maxW   >= rec.maxWeight;
+    const prVol = total>0  && rec.maxVolume>0  && total  >= rec.maxVolume;
+    return {prVol, prW};
   },
+
   _buildVolBar(ex,idx) {
     const sets=ex.sets||[];
     const {total,detail,hasData}=this._calcVol(sets);
