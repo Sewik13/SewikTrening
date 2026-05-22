@@ -190,6 +190,30 @@ const App = {
     if (ch) DB.save(this.db);
   },
 
+  /**
+   * Przelicza wszystkie rekordy od zera na podstawie całej historii treningów.
+   * Wywoływane po usunięciu treningu lub serii — żeby rekordy wróciły do
+   * poprzednich wartości gdy usunięty trening był rekordowy.
+   */
+  _rebuildAllRecords() {
+    const fresh = {};
+    ['UBW','LBW','FBW'].forEach(plan => {
+      Object.values(this.db.plans[plan].workouts||{}).forEach(workout => {
+        (workout.exercises||[]).forEach(ex => {
+          const key = (ex.name||'').trim().toLowerCase();
+          if (!key) return;
+          const {total, detail} = this._calcVol(ex.sets||[]);
+          const maxW = Math.max(0, ...detail.map(d=>d.w));
+          if (!fresh[key]) fresh[key] = {maxWeight:0, maxVolume:0};
+          if (maxW  > fresh[key].maxWeight)  fresh[key].maxWeight  = maxW;
+          if (total > fresh[key].maxVolume)  fresh[key].maxVolume  = total;
+        });
+      });
+    });
+    this.db.records = fresh;
+    DB.save(this.db);
+  },
+
   /* NAVIGATION */
   _show(id) {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -251,7 +275,8 @@ const App = {
   _confirmDelDate(dk) {
     this._confirm('Usuń trening',`Usunąć trening z dnia ${this._fmt(dk)}?`, ()=>{
       delete this.db.plans[this.plan].workouts[dk];
-      DB.save(this.db); this._renderPlan(); this._toast('Trening usunięty');
+      this._rebuildAllRecords();
+      this._renderPlan(); this._toast('Trening usunięty');
     });
   },
   closeConfirmModal(e) {
@@ -331,7 +356,8 @@ const App = {
   deleteWorkout() {
     this._confirm('Usuń trening',`Usunąć trening z dnia ${this._fmt(this.date)}?`, ()=>{
       delete this.db.plans[this.plan].workouts[this.date];
-      DB.save(this.db); this._toast('Trening usunięty'); this.goToPlan();
+      this._rebuildAllRecords();
+      this._toast('Trening usunięty'); this.goToPlan();
     });
   },
   _cw() { return this.db.plans[this.plan].workouts[this.date]; },
@@ -474,7 +500,8 @@ const App = {
   _confirmDelEx(idx) {
     const name = this._cw().exercises[idx]?.name||`Ćwiczenie ${idx+1}`;
     this._confirm('Usuń ćwiczenie',`Usunąć "${name}"?`, ()=>{
-      this._cw().exercises.splice(idx,1); DB.save(this.db);
+      this._cw().exercises.splice(idx,1);
+      this._rebuildAllRecords();
       this._renderWorkout(); this._toast('Ćwiczenie usunięte');
     });
   },
@@ -490,7 +517,9 @@ const App = {
   deleteSet(exIdx,setIdx) {
     const sets = this._cw().exercises[exIdx].sets;
     if (sets.length<=1) { this._toast('Minimalna liczba serii to 1'); return; }
-    sets.splice(setIdx,1); DB.save(this.db); this._rebuildCard(exIdx);
+    sets.splice(setIdx,1);
+    this._rebuildAllRecords();
+    this._rebuildCard(exIdx);
   },
 
   _rebuildCard(exIdx) {
