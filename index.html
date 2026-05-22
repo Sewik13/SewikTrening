@@ -14,8 +14,22 @@
 </head>
 <body>
 
+<!-- EKRAN LOGOWANIA -->
+<div id="screen-login" class="screen active">
+  <div class="login-wrap">
+    <div class="login-logo">💪</div>
+    <h1 class="login-title">Mój Trening</h1>
+    <p class="login-sub">Zaloguj się, żeby synchronizować treningi między urządzeniami</p>
+    <button class="btn-google" onclick="Auth.signIn()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20" alt="Google"/>
+      Zaloguj przez Google
+    </button>
+    <p class="login-note">Dane są prywatne i widoczne tylko dla Ciebie</p>
+  </div>
+</div>
+
 <!-- EKRAN GŁÓWNY -->
-<div id="screen-home" class="screen active">
+<div id="screen-home" class="screen">
   <header class="app-header">
     <div class="header-logo">💪</div>
     <h1 class="app-title">Mój Trening</h1>
@@ -43,7 +57,13 @@
       <div class="plan-card__arrow">›</div>
     </button>
   </main>
-  <footer class="home-footer"><p>Dane zapisywane lokalnie na urządzeniu</p></footer>
+  <footer class="home-footer">
+    <div class="user-bar" id="user-bar">
+      <img id="user-avatar" class="user-avatar" src="" alt="" style="display:none;"/>
+      <span id="user-name" class="user-name"></span>
+      <button class="btn-signout" onclick="Auth.signOut()">Wyloguj</button>
+    </div>
+  </footer>
 </div>
 
 <!-- EKRAN PLANU -->
@@ -199,9 +219,15 @@
   </div>
 </div>
 
+<!-- OVERLAY: ładowanie -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <p class="loading-text">Ładowanie…</p>
+</div>
+
 <!-- TOAST -->
 <div id="toast" class="toast" style="display:none;"></div>
 
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

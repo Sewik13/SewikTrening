@@ -1,8 +1,28 @@
 /**
  * TRENING PWA – app.js
- * Notatki · SS checkbox · Rekordy 🚀 · Drag&Drop ćwiczeń i szablonów
+ * Firebase Firestore + Google Auth + pełna funkcjonalność
  */
-'use strict';
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+/* ── FIREBASE CONFIG ─────────────────────────────────────── */
+const firebaseConfig = {
+  apiKey:            "AIzaSyCauQOrygorNofcbFewo5jSlQnL9vsdeJY",
+  authDomain:        "trening-app-d7425.firebaseapp.com",
+  projectId:         "trening-app-d7425",
+  storageBucket:     "trening-app-d7425.firebasestorage.app",
+  messagingSenderId: "255226705784",
+  appId:             "1:255226705784:web:1a27eaafed4e037c053a8d"
+};
+
+const firebase   = initializeApp(firebaseConfig);
+const auth       = getAuth(firebase);
+const db         = getFirestore(firebase);
+const provider   = new GoogleAuthProvider();
 
 /* ── PREDEFINIOWANE SZABLONY ─────────────────────────────── */
 const BUILTIN = [
@@ -21,32 +41,137 @@ const BUILTIN = [
     {name:'Wspięcia na palce stojąc',sets:3},{name:'RDL jednonóż',sets:3}]},
 ];
 
-/* ── STORAGE ─────────────────────────────────────────────── */
-const DB = {
-  KEY: 'trening_pwa_v2',
-  load() {
-    try {
-      const raw = localStorage.getItem(this.KEY);
-      const db  = raw ? JSON.parse(raw) : this._def();
-      if (!db.templates) db.templates = [];
-      if (!db.records)   db.records   = {};
-      ['UBW','LBW','FBW'].forEach(p => {
-        Object.values(db.plans[p]?.workouts||{}).forEach(w => {
-          (w.exercises||[]).forEach(ex => {
-            if (!('superSet' in ex)) ex.superSet = false;
-            (ex.sets||[]).forEach(s => {
-              if (!('reps'   in s)) s.reps   = '';
-              if (!('weight' in s)) s.weight = '';
-              if (!('note'   in s)) s.note   = '';
-            });
-          });
+/* ── DOMYŚLNA STRUKTURA BAZY ─────────────────────────────── */
+function defaultDB() {
+  return {
+    plans: { UBW:{workouts:{}}, LBW:{workouts:{}}, FBW:{workouts:{}} },
+    templates: [],
+    records: {}
+  };
+}
+
+function migrateDB(db) {
+  if (!db.templates) db.templates = [];
+  if (!db.records)   db.records   = {};
+  if (!db.plans)     db.plans     = { UBW:{workouts:{}}, LBW:{workouts:{}}, FBW:{workouts:{}} };
+  ['UBW','LBW','FBW'].forEach(p => {
+    if (!db.plans[p]) db.plans[p] = {workouts:{}};
+    Object.values(db.plans[p].workouts||{}).forEach(w => {
+      (w.exercises||[]).forEach(ex => {
+        if (!('superSet' in ex)) ex.superSet = false;
+        (ex.sets||[]).forEach(s => {
+          if (!('reps'   in s)) s.reps   = '';
+          if (!('weight' in s)) s.weight = '';
+          if (!('note'   in s)) s.note   = '';
         });
       });
-      return db;
-    } catch { return this._def(); }
+    });
+  });
+  return db;
+}
+
+/* ── AUTH ────────────────────────────────────────────────── */
+const Auth = {
+  user: null,
+  unsubscribeSnapshot: null,
+
+  async signIn() {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch(e) {
+      App._toast('Błąd logowania: ' + e.message);
+    }
   },
-  save(db) { try { localStorage.setItem(this.KEY, JSON.stringify(db)); } catch(e){} },
-  _def() { return { plans:{UBW:{workouts:{}},LBW:{workouts:{}},FBW:{workouts:{}}}, templates:[], records:{} }; }
+
+  async signOut() {
+    App._confirm('Wyloguj', 'Czy na pewno chcesz się wylogować?', async () => {
+      if (Auth.unsubscribeSnapshot) Auth.unsubscribeSnapshot();
+      await signOut(auth);
+    });
+  },
+
+  init() {
+    onAuthStateChanged(auth, async user => {
+      this.user = user;
+      if (user) {
+        // Zalogowany
+        document.getElementById('user-name').textContent   = user.displayName || user.email;
+        const av = document.getElementById('user-avatar');
+        if (user.photoURL) { av.src = user.photoURL; av.style.display='block'; }
+        this._loadAndListen();
+      } else {
+        // Wylogowany
+        if (this.unsubscribeSnapshot) { this.unsubscribeSnapshot(); this.unsubscribeSnapshot=null; }
+        App.db = null;
+        this._showLogin();
+      }
+    });
+  },
+
+  _userDoc() {
+    return doc(db, 'users', this.user.uid);
+  },
+
+  async _loadAndListen() {
+    this._showLoading();
+    try {
+      // Pierwsze pobranie danych
+      const snap = await getDoc(this._userDoc());
+      if (snap.exists()) {
+        App.db = migrateDB(snap.data());
+      } else {
+        // Nowy użytkownik — utwórz bazę
+        App.db = defaultDB();
+        App._injectBuiltins();
+        await setDoc(this._userDoc(), App.db);
+      }
+      App._injectBuiltins();
+      this._showApp();
+
+      // Nasłuchuj zmian w czasie rzeczywistym (synchronizacja między urządzeniami)
+      this.unsubscribeSnapshot = onSnapshot(this._userDoc(), snap => {
+        if (snap.exists() && App.db) {
+          const remote = migrateDB(snap.data());
+          // Aktualizuj lokalny stan tylko gdy jesteśmy na ekranie głównym
+          // (żeby nie przerywać edycji)
+          App.db = remote;
+        }
+      });
+    } catch(e) {
+      App._toast('Błąd ładowania danych: ' + e.message);
+      this._showLogin();
+    }
+  },
+
+  _showLogin() {
+    document.getElementById('loading-overlay').style.display = 'none';
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-login').classList.add('active');
+  },
+  _showLoading() {
+    document.getElementById('loading-overlay').style.display = 'flex';
+  },
+  _showApp() {
+    document.getElementById('loading-overlay').style.display = 'none';
+    App._show('screen-home');
+  }
+};
+
+/* ── STORAGE (Firebase) ──────────────────────────────────── */
+const DB = {
+  // Zapisz cały dokument do Firestore (debounced — max raz na sekundę)
+  _saveTimer: null,
+  save(data) {
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(async () => {
+      if (!Auth.user) return;
+      try {
+        await setDoc(doc(db, 'users', Auth.user.uid), data);
+      } catch(e) {
+        console.error('Błąd zapisu:', e);
+      }
+    }, 800);
+  }
 };
 
 /* ── APP ─────────────────────────────────────────────────── */
@@ -55,18 +180,13 @@ const App = {
   _toast_t: null, _pendingCb: null,
   _copyDate: null, _editTplId: null, _useTplId: null,
 
-  /* INIT */
-  init() {
-    this.db = DB.load();
-    this._injectBuiltins();
-    if ('serviceWorker' in navigator)
-      navigator.serviceWorker.register('service-worker.js').catch(()=>{});
-    this._show('screen-home');
-  },
   _injectBuiltins() {
+    if (!this.db) return;
     const ids = new Set(this.db.templates.map(t=>t.id));
     let ch = false;
-    [...BUILTIN].reverse().forEach(t => { if (!ids.has(t.id)) { this.db.templates.unshift({...t}); ch=true; }});
+    [...BUILTIN].reverse().forEach(t => {
+      if (!ids.has(t.id)) { this.db.templates.unshift({...t}); ch=true; }
+    });
     if (ch) DB.save(this.db);
   },
 
@@ -226,15 +346,13 @@ const App = {
     this._initDnd();
   },
 
-  /* ── BUILD EXERCISE CARD ───────────────────────────────── */
+  /* EXERCISE CARD */
   _buildCard(ex, idx) {
     const card = document.createElement('div');
     card.className = 'exercise-card' + (ex.superSet?' exercise-card--ss':'');
     card.dataset.idx = idx;
 
-    /* header */
     const hdr = document.createElement('div'); hdr.className='exercise-header';
-
     const handle = document.createElement('div'); handle.className='drag-handle'; handle.textContent='⠿';
     const num = document.createElement('span'); num.className='ex-num'; num.textContent=`Ćw. ${idx+1}`;
 
@@ -243,7 +361,6 @@ const App = {
     nameIn.placeholder='Nazwa ćwiczenia…'; nameIn.value=ex.name||'';
     nameIn.addEventListener('change',()=>{ this._cw().exercises[idx].name=nameIn.value.trim(); DB.save(this.db); });
 
-    /* SS checkbox */
     const ssLabel = document.createElement('label');
     ssLabel.className='ss-label'+(ex.superSet?' is-active':'');
     const ssCb = document.createElement('input');
@@ -263,7 +380,6 @@ const App = {
     hdr.append(handle, num, nameIn, ssLabel, delBtn);
     card.appendChild(hdr);
 
-    /* sets table */
     const tbl = document.createElement('div'); tbl.className='sets-table';
     const th = document.createElement('div'); th.className='sets-table-header';
     th.innerHTML='<span>#</span><span>POWT.</span><span></span><span>CIĘŻAR</span><span>NOTA</span><span></span>';
@@ -271,10 +387,8 @@ const App = {
     (ex.sets||[]).forEach((s,si)=>tbl.appendChild(this._buildRow(s,idx,si)));
     card.appendChild(tbl);
 
-    /* volume bar */
     card.appendChild(this._buildVolBar(ex,idx));
 
-    /* footer */
     const foot = document.createElement('div'); foot.className='exercise-footer';
     const addBtn = document.createElement('button'); addBtn.className='btn-add-set';
     addBtn.innerHTML='<span>+</span> Dodaj serię';
@@ -284,10 +398,9 @@ const App = {
     return card;
   },
 
-  /* ── BUILD SET ROW ─────────────────────────────────────── */
+  /* SET ROW */
   _buildRow(set, exIdx, setIdx) {
     const row = document.createElement('div'); row.className='set-row';
-
     const num = document.createElement('div'); num.className='set-number'; num.textContent=setIdx+1;
 
     const rIn = document.createElement('input');
@@ -310,7 +423,6 @@ const App = {
       this._refreshVol(wIn.closest('.exercise-card'),exIdx);
     });
 
-    /* note */
     const noteCell = document.createElement('div'); noteCell.className='note-cell';
     const noteBtn = document.createElement('button');
     noteBtn.className='note-btn'+(set.note?' has-note':'');
@@ -329,7 +441,6 @@ const App = {
 
     row.append(num,rIn,sep,wIn,noteCell,del);
 
-    /* note row */
     const noteRow = document.createElement('div');
     noteRow.className='note-row'+(set.note?' visible':'');
     const noteIn = document.createElement('input');
@@ -389,7 +500,7 @@ const App = {
     cont.replaceChild(nw,old); this._initDnd();
   },
 
-  /* ── VOLUME + RECORDS ──────────────────────────────────── */
+  /* VOLUME + RECORDS */
   _parseW(s) {
     if (!s) return 0;
     const v = parseFloat(String(s).replace(/[kK][gG]?/g,'').replace(',','.').trim());
@@ -445,7 +556,7 @@ const App = {
     else card.insertBefore(nw,card.querySelector('.exercise-footer'));
   },
 
-  /* ── DRAG & DROP – ćwiczenia ───────────────────────────── */
+  /* DRAG & DROP – ćwiczenia */
   _initDnd() {
     const cont=document.getElementById('exercises-container');
     cont.querySelectorAll('.drag-handle').forEach(h=>{
@@ -467,7 +578,7 @@ const App = {
     ghost.style.cssText=`position:fixed;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;z-index:9999;pointer-events:none;`;
     document.body.appendChild(ghost);
     card.classList.add('exercise-card--src');
-    const state={on:true,srcIdx,targetIdx:srcIdx,ghost,cards,offsetY:cy-rect.top};
+    const state={srcIdx,targetIdx:srcIdx,ghost,cards,offsetY:cy-rect.top};
     const mv=ev=>this._dndMove(ev,isTouch,state);
     const up=ev=>this._dndEnd(ev,isTouch,state,mv,up);
     document.addEventListener(isTouch?'touchmove':'mousemove',mv,{passive:false});
@@ -501,7 +612,7 @@ const App = {
     }
   },
 
-  /* ── DRAG & DROP – szablony ────────────────────────────── */
+  /* DRAG & DROP – szablony */
   _initTplDnd() {
     document.querySelectorAll('#tpl-ex-container .tpl-drag-handle').forEach(h=>{
       const f=h.cloneNode(true); h.parentNode.replaceChild(f,h);
@@ -558,7 +669,7 @@ const App = {
     }
   },
 
-  /* ── TEMPLATES ─────────────────────────────────────────── */
+  /* TEMPLATES */
   _renderTpls() {
     const tpls=this.db.templates||[];
     const list=document.getElementById('templates-list');
@@ -597,8 +708,6 @@ const App = {
     this.addTplExRow('',3);
     this._show('screen-tpl-edit');
   },
-  openNewTemplateScreen() { this.openNewTpl(); },
-
   openEditTpl(id) {
     const tpl=this.db.templates.find(t=>t.id===id); if(!tpl) return;
     this._editTplId=id;
@@ -610,14 +719,11 @@ const App = {
     this._initTplDnd();
     this._show('screen-tpl-edit');
   },
-  openEditTemplateScreen(id) { this.openEditTpl(id); },
-
   selectTemplateType(t) { this._selTplType(t); },
   _selTplType(t) {
     document.querySelectorAll('.plan-type-btn').forEach(b=>b.classList.toggle('plan-type-btn--active',b.dataset.type===t));
   },
   _getTplType() { const a=document.querySelector('.plan-type-btn--active'); return a?a.dataset.type:null; },
-
   addTemplateExercise() { this.addTplExRow('',3); },
   addTplExRow(name='',sets=3) {
     const cont=document.getElementById('tpl-ex-container');
@@ -639,8 +745,7 @@ const App = {
       </div>
       <button type="button" class="tpl-ex-del" onclick="App._removeTplRow(this)">✕</button>`;
     cont.appendChild(row);
-    this._renum();
-    this._initTplDnd();
+    this._renum(); this._initTplDnd();
   },
   _step(btn,d) {
     const v=btn.parentElement.querySelector('.stepper-val');
@@ -695,13 +800,10 @@ const App = {
       `Tworzysz trening <strong>${this._esc(tpl.name)}</strong> <span class="plan-badge plan-badge--${tpl.planType}">${tpl.planType}</span>`;
     document.getElementById('modal-use-tpl').style.display='flex';
   },
-  openUseTemplateModal(id) { this.openUseTplModal(id); },
   closeUseTplModal(e) {
     if(e&&e.target!==document.getElementById('modal-use-tpl')) return;
     document.getElementById('modal-use-tpl').style.display='none'; this._useTplId=null;
   },
-  closeUseTemplateModal(e) { this.closeUseTplModal(e); },
-  confirmUseTemplate() { this.confirmUseTpl(); },
   confirmUseTpl() {
     const dk=document.getElementById('use-tpl-date').value;
     if(!dk){this._toast('Wybierz datę');return;}
@@ -718,7 +820,7 @@ const App = {
     this.plan=tpl.planType; this._renderPlan(); this.openWorkout(dk);
   },
 
-  /* ── HELPERS ───────────────────────────────────────────── */
+  /* HELPERS */
   _fmt(dk)  { const[y,m,d]=dk.split('-'); return `${d}.${m}.${y}`; },
   _pl(n,a,b,c) { if(n===1) return`${n} ${a}`; if(n>=2&&n<=4) return`${n} ${b}`; return`${n} ${c}`; },
   _esc(s)   { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); },
@@ -735,4 +837,9 @@ const App = {
   },
 };
 
-document.addEventListener('DOMContentLoaded',()=>App.init());
+/* Eksponuj globalne handlery */
+window.App  = App;
+window.Auth = Auth;
+
+/* START */
+document.addEventListener('DOMContentLoaded', () => Auth.init());

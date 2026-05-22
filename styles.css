@@ -360,3 +360,58 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 }
 .import-status--ok  { background: rgba(48,209,88,.12);  color: var(--green); border: 1px solid rgba(48,209,88,.25); }
 .import-status--err { background: rgba(255,69,58,.12);  color: var(--red);   border: 1px solid rgba(255,69,58,.25); }
+
+/* ── LOGIN SCREEN ───────────────────────────────────────── */
+#screen-login {
+  justify-content: center;
+  align-items: center;
+  background: var(--bg);
+}
+.login-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 32px;
+  max-width: 360px;
+  width: 100%;
+}
+.login-logo  { font-size: 64px; margin-bottom: 16px; }
+.login-title { font-size: 26px; font-weight: 700; letter-spacing: -.5px; margin-bottom: 8px; }
+.login-sub   { font-size: 14px; color: var(--soft); line-height: 1.6; margin-bottom: 36px; }
+.btn-google  {
+  display: flex; align-items: center; gap: 12px; justify-content: center;
+  background: #fff; color: #1a1a1a; border: none; border-radius: var(--r-lg);
+  font-size: 15px; font-weight: 600; font-family: var(--font);
+  padding: 14px 24px; width: 100%; cursor: pointer;
+  box-shadow: 0 2px 14px rgba(0,0,0,.35); transition: opacity .12s, transform .12s;
+  -webkit-appearance: none;
+}
+.btn-google:active { opacity: .85; transform: scale(.98); }
+.login-note  { font-size: 11px; color: var(--muted); margin-top: 18px; }
+
+/* ── USER BAR ───────────────────────────────────────────── */
+.user-bar    { display: flex; align-items: center; gap: 10px; justify-content: center; }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.user-name   { font-size: 12px; color: var(--soft); flex: 1; text-align: left; }
+.btn-signout {
+  background: none; border: 1px solid var(--border); border-radius: 7px;
+  font-size: 11px; font-weight: 500; color: var(--soft); cursor: pointer;
+  padding: 5px 10px; -webkit-appearance: none; font-family: var(--font);
+  transition: background .12s;
+}
+.btn-signout:active { background: var(--surf2); }
+
+/* ── LOADING OVERLAY ────────────────────────────────────── */
+.loading-overlay {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+.loading-spinner {
+  width: 40px; height: 40px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .8s linear infinite; margin-bottom: 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--soft); }
