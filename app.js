@@ -361,6 +361,76 @@ const App = {
     });
   },
   _cw() { return this.db.plans[this.plan].workouts[this.date]; },
+
+  /**
+   * Znajduje poprzedni trening (wcześniejsza data) dla tego samego planu
+   * i zwraca ćwiczenie o tej samej nazwie, jeśli istnieje.
+   */
+  _findLastSession(exName) {
+    if (!exName) return null;
+    const workouts = this.db.plans[this.plan].workouts;
+    // Posortuj daty malejąco i znajdź pierwszą wcześniejszą niż aktualna
+    const prevDates = Object.keys(workouts)
+      .filter(d => d < this.date)
+      .sort((a,b) => b.localeCompare(a));
+    for (const d of prevDates) {
+      const ex = (workouts[d].exercises||[]).find(
+        e => (e.name||'').trim().toLowerCase() === exName.trim().toLowerCase()
+      );
+      if (ex && (ex.sets||[]).some(s => s.reps || s.weight)) {
+        return { date: d, exercise: ex };
+      }
+    }
+    return null;
+  },
+
+  /** Pokazuje popup z wynikami z poprzedniego treningu */
+  showLastSession(exName, cardEl) {
+    // Usuń istniejący popup jeśli jest
+    document.querySelectorAll('.last-session-popup').forEach(p=>p.remove());
+
+    const last = this._findLastSession(exName);
+    if (!last) { this._toast('Brak poprzednich wyników dla tego ćwiczenia'); return; }
+
+    const popup = document.createElement('div');
+    popup.className = 'last-session-popup';
+
+    const setsHTML = (last.exercise.sets||[]).map((s,i) => {
+      const r = s.reps   || '—';
+      const w = s.weight || '—';
+      const n = s.note   ? `<span class="lsp-note">${this._esc(s.note)}</span>` : '';
+      return `<div class="lsp-row">
+        <span class="lsp-num">${i+1}</span>
+        <span class="lsp-val">${r} powt. × ${w}</span>
+        ${n}
+      </div>`;
+    }).join('');
+
+    const vol = this._calcVol(last.exercise.sets||[]);
+    const volStr = vol.hasData
+      ? `<div class="lsp-vol">Objętość: ${vol.total.toLocaleString('pl-PL')} kg</div>`
+      : '';
+
+    popup.innerHTML = `
+      <div class="lsp-header">
+        <div class="lsp-title">
+          <span class="lsp-icon">🔍</span>
+          <span class="lsp-name">${this._esc(last.exercise.name)}</span>
+        </div>
+        <div class="lsp-date">${this._fmt(last.date)}</div>
+        <button class="lsp-close" onclick="this.closest('.last-session-popup').remove()">✕</button>
+      </div>
+      <div class="lsp-sets">${setsHTML}</div>
+      ${volStr}`;
+
+    // Wstaw popup bezpośrednio pod nagłówkiem karty
+    const hdr = cardEl.querySelector('.exercise-header');
+    hdr.insertAdjacentElement('afterend', popup);
+
+    // Animacja wejścia
+    requestAnimationFrame(() => popup.classList.add('lsp-visible'));
+  },
+
   _renderWorkout(mode='update') {
     const exs = this._cw().exercises||[];
     const cont = document.getElementById('exercises-container');
@@ -399,11 +469,26 @@ const App = {
     });
     ssLabel.appendChild(ssCb); ssLabel.append('SS');
 
+    // Ikonka lupy — poprzedni trening
+    const lastSession = this._findLastSession(ex.name);
+    const lupaBtn = document.createElement('button');
+    lupaBtn.className = 'lupa-btn' + (lastSession ? '' : ' lupa-btn--disabled');
+    lupaBtn.textContent = '🔍';
+    lupaBtn.title = lastSession
+      ? `Poprzedni trening: ${this._fmt(lastSession.date)}`
+      : 'Brak poprzednich wyników';
+    lupaBtn.addEventListener('click', () => {
+      // Jeśli popup już jest otwarty — zamknij
+      const existing = card.querySelector('.last-session-popup');
+      if (existing) { existing.remove(); return; }
+      App.showLastSession(ex.name, card);
+    });
+
     const delBtn = document.createElement('button');
     delBtn.className='exercise-delete-btn'; delBtn.textContent='✕';
     delBtn.addEventListener('click',()=>this._confirmDelEx(idx));
 
-    hdr.append(handle, num, nameIn, ssLabel, delBtn);
+    hdr.append(handle, num, nameIn, ssLabel, lupaBtn, delBtn);
     card.appendChild(hdr);
 
     const tbl = document.createElement('div'); tbl.className='sets-table';
