@@ -192,28 +192,6 @@ const App = {
 
   /**
    * Przelicza wszystkie rekordy od zera na podstawie całej historii treningów.
-   * Wywoływane po usunięciu treningu lub serii — żeby rekordy wróciły do
-   * poprzednich wartości gdy usunięty trening był rekordowy.
-   */
-  _rebuildAllRecords() {
-    const fresh = {};
-    ['UBW','LBW','FBW'].forEach(plan => {
-      Object.values(this.db.plans[plan].workouts||{}).forEach(workout => {
-        (workout.exercises||[]).forEach(ex => {
-          const key = (ex.name||'').trim().toLowerCase();
-          if (!key) return;
-          const {total, detail} = this._calcVol(ex.sets||[]);
-          const maxW = Math.max(0, ...detail.map(d=>d.w));
-          if (!fresh[key]) fresh[key] = {maxWeight:0, maxVolume:0};
-          if (maxW  > fresh[key].maxWeight)  fresh[key].maxWeight  = maxW;
-          if (total > fresh[key].maxVolume)  fresh[key].maxVolume  = total;
-        });
-      });
-    });
-    this.db.records = fresh;
-    DB.save(this.db);
-  },
-
   /* NAVIGATION */
   _show(id) {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -614,78 +592,179 @@ const App = {
     cont.replaceChild(nw,old); this._initDnd();
   },
 
-  /* VOLUME + RECORDS */
+  /* ============================================================
+     VOLUME + RECORDS – czysta logika od zera
+     
+     records[key] = { maxWeight: number, maxVolume: number }
+     
+     maxWeight = największy ciężar w POJEDYNCZEJ SERII kiedykolwiek
+     maxVolume = największa SUMA (reps × weight) wszystkich serii ćwiczenia
+                 w jednym dniu treningu
+     
+     Badge OBJĘTOŚĆ  → gdy dzisiejsza suma >= rekord sumy
+     Badge PR        → gdy największy ciężar w serii >= rekord ciężaru
+     ============================================================ */
+
   _parseW(s) {
     if (!s) return 0;
     const v = parseFloat(String(s).replace(/[kK][gG]?/g,'').replace(',','.').trim());
-    return isNaN(v)||v<0 ? 0 : v;
+    return (isNaN(v) || v < 0) ? 0 : v;
   },
+
+  /** Oblicza objętość i szczegóły serii */
   _calcVol(sets) {
-    let total=0, hasData=false;
-    const detail=(sets||[]).map(s=>{
-      const r=parseInt(s.reps)||0, w=this._parseW(s.weight), v=r*w;
-      if(r>0&&w>0) hasData=true; total+=v; return {r,w,v};
+    let total = 0, hasData = false;
+    const detail = (sets||[]).map(s => {
+      const r = parseInt(s.reps) || 0;
+      const w = this._parseW(s.weight);
+      const v = r * w;
+      if (r > 0 && w > 0) hasData = true;
+      total += v;
+      return { r, w, v };
     });
-    return {total,detail,hasData};
+    return { total, detail, hasData };
   },
 
   /**
-   * Sprawdza czy wartości ćwiczenia są rekordowe.
-   * Tryb 'check' — tylko porównuje, nie nadpisuje (używany przy renderowaniu po rebuild).
-   * Tryb 'update' — aktualizuje rekord jeśli wyższy (używany przy wpisywaniu na żywo).
+   * Sprawdza rekordy i opcjonalnie je aktualizuje.
+   *
+   * mode='update' : wywołane przy wpisywaniu na żywo
+   *   → aktualizuje records[key] jeśli aktualne wartości są wyższe
+   *   → zwraca czy AKTUALNE wartości są rekordowe (>=)
+   *
+   * mode='check' : wywołane po usunięciu (po _rebuildAllRecords)
+   *   → NIE modyfikuje records (już przeliczone)
+   *   → tylko sprawdza czy aktualne wartości = rekordowi
    */
-  _updateRec(name, sets, mode='update') {
+  _checkRec(name, sets, mode) {
     const key = (name||'').trim().toLowerCase();
-    if (!key) return {prVol:false, prW:false};
+    if (!key) return { badgeVol: false, badgePR: false };
 
-    const {total, detail} = this._calcVol(sets);
-    const maxW = Math.max(0, ...detail.map(d=>d.w));
-    const rec  = this.db.records[key] || {maxWeight:0, maxVolume:0};
+    const { total, detail } = this._calcVol(sets);
+
+    // Największy ciężar w pojedynczej serii (tego ćwiczenia dziś)
+    const maxWToday = detail.reduce((max, d) => d.w > max ? d.w : max, 0);
+
+    // Pobierz aktualny rekord (lub zerowy jeśli pierwszy raz)
+    const rec = this.db.records[key] || { maxWeight: 0, maxVolume: 0 };
 
     if (mode === 'update') {
-      // Aktualizuj tylko w górę
       let changed = false;
-      if (maxW  > 0 && maxW  > rec.maxWeight) { rec.maxWeight = maxW;  changed = true; }
-      if (total > 0 && total > rec.maxVolume) { rec.maxVolume = total; changed = true; }
+      // Rekord ciężaru: największy ciężar w jednej serii
+      if (maxWToday > 0 && maxWToday > rec.maxWeight) {
+        rec.maxWeight = maxWToday;
+        changed = true;
+      }
+      // Rekord objętości: suma reps×kg całego ćwiczenia w jednym treningu
+      if (total > 0 && total > rec.maxVolume) {
+        rec.maxVolume = total;
+        changed = true;
+      }
       this.db.records[key] = rec;
       if (changed) DB.save(this.db);
     }
 
-    // Badge gdy wartość >= aktualny rekord
-    const prW   = maxW  > 0 && rec.maxWeight > 0 && maxW  >= rec.maxWeight;
-    const prVol = total > 0 && rec.maxVolume > 0 && total >= rec.maxVolume;
-    return {prVol, prW};
+    // Pokaż badge gdy aktualna wartość >= rekordowi
+    // (>= bo po zapisaniu rekordu chcemy widzieć badge przy ponownym otwarciu)
+    const badgeVol = total > 0 && rec.maxVolume > 0 && total >= rec.maxVolume;
+    const badgePR  = maxWToday > 0 && rec.maxWeight > 0 && maxWToday >= rec.maxWeight;
+
+    return { badgeVol, badgePR };
   },
 
+  /**
+   * Przelicza wszystkie rekordy od zera na podstawie całej historii.
+   * Wywoływane PO usunięciu treningu/ćwiczenia/serii.
+   * Gwarantuje poprawność rekordów niezależnie od kolejności operacji.
+   */
+  _rebuildAllRecords() {
+    const fresh = {};
+    ['UBW','LBW','FBW'].forEach(plan => {
+      Object.values(this.db.plans[plan].workouts || {}).forEach(workout => {
+        (workout.exercises || []).forEach(ex => {
+          const key = (ex.name||'').trim().toLowerCase();
+          if (!key) return;
+          const { total, detail } = this._calcVol(ex.sets||[]);
+          const maxW = detail.reduce((m, d) => d.w > m ? d.w : m, 0);
+          if (!fresh[key]) fresh[key] = { maxWeight: 0, maxVolume: 0 };
+          if (maxW  > fresh[key].maxWeight) fresh[key].maxWeight = maxW;
+          if (total > fresh[key].maxVolume) fresh[key].maxVolume = total;
+        });
+      });
+    });
+    this.db.records = fresh;
+    DB.save(this.db);
+  },
+
+  /** Buduje pasek objętości pod tabelą serii */
   _buildVolBar(ex, idx, mode='update') {
-    const sets=ex.sets||[];
-    const {total,detail,hasData}=this._calcVol(sets);
-    const bar=document.createElement('div'); bar.className='volume-bar';
+    const sets = ex.sets || [];
+    const { total, detail, hasData } = this._calcVol(sets);
+    const bar = document.createElement('div');
+    bar.className = 'volume-bar';
+
+    // Brak danych – pokaż placeholder
     if (!hasData) {
-      bar.innerHTML=`<div class="vol-header"><span class="vol-label"><img src="icons/icon-vol.svg" class="vol-icon" alt="Objętość"/></span><span class="vol-empty-txt">Wpisz dane</span></div>`;
+      bar.innerHTML = `<div class="vol-header">
+        <span class="vol-label vol-label--empty">Wpisz dane</span>
+      </div>`;
       return bar;
     }
-    const {prVol,prW}=this._updateRec(ex.name, sets, mode);
-    const volBadge = prVol ? '<span class="pr-badge"><img src="icons/icon-pr.svg" class="pr-icon" alt="PR"/> PR VOL</span>' : '';
-    const wBadge   = prW   ? '<span class="pr-badge pr-badge--w"><img src="icons/icon-pr.svg" class="pr-icon" alt="PR"/> PR KG</span>' : '';
-    const rowsHTML=detail.map((d,i)=>{
-      if(d.r===0&&d.w===0) return `<div class="vol-row"><span class="vol-row-num">${i+1}</span><span class="vol-row-empty">—</span></div>`;
-      const res=d.v>0?`= <strong>${d.v.toLocaleString('pl-PL')} kg</strong>`:'= —';
-      return `<div class="vol-row"><span class="vol-row-num">${i+1}</span><span class="vol-row-calc">${d.r} × ${d.w} kg ${res}</span></div>`;
+
+    const { badgeVol, badgePR } = this._checkRec(ex.name, sets, mode);
+
+    // Badge OBJĘTOŚĆ – rekord sumy
+    const volBadge = badgeVol
+      ? `<span class="rec-badge rec-badge--vol">
+           <img src="icons/icon-vol.svg" class="rec-icon" alt="Rekord objętości"/>
+           OBJĘTOŚĆ
+         </span>` : '';
+
+    // Badge PR – rekord ciężaru w serii
+    const prBadge = badgePR
+      ? `<span class="rec-badge rec-badge--pr">
+           <img src="icons/icon-pr.svg" class="rec-icon" alt="Personal Record"/>
+           PR
+         </span>` : '';
+
+    // Wiersze serii ze sprawdzeniem
+    const rowsHTML = detail.map((d, i) => {
+      if (d.r === 0 && d.w === 0) {
+        return `<div class="vol-row">
+          <span class="vol-row-num">${i+1}</span>
+          <span class="vol-row-empty">—</span>
+        </div>`;
+      }
+      const res = d.v > 0
+        ? `= <strong>${d.v.toLocaleString('pl-PL')} kg</strong>`
+        : '= —';
+      return `<div class="vol-row">
+        <span class="vol-row-num">${i+1}</span>
+        <span class="vol-row-calc">${d.r} × ${d.w} kg ${res}</span>
+      </div>`;
     }).join('');
-    bar.innerHTML=`<div class="vol-header">
-      <span class="vol-label"><img src="icons/icon-vol.svg" class="vol-icon" alt="Objętość"/></span>
-      <span class="vol-total">${total.toLocaleString('pl-PL')} kg ${volBadge}${wBadge}</span></div>
+
+    bar.innerHTML = `
+      <div class="vol-header">
+        <span class="vol-label">
+          <img src="icons/icon-vol.svg" class="vol-icon" alt="Objętość"/>
+        </span>
+        <span class="vol-total">
+          ${total.toLocaleString('pl-PL')} kg
+          ${volBadge}${prBadge}
+        </span>
+      </div>
       <div class="vol-rows">${rowsHTML}</div>`;
     return bar;
   },
+
   _refreshVol(card, exIdx) {
-    if(!card) return;
-    const ex=this._cw().exercises[exIdx];
-    const old=card.querySelector('.volume-bar');
-    const nw=this._buildVolBar(ex, exIdx, 'update');
-    if(old) card.replaceChild(nw,old);
-    else card.insertBefore(nw,card.querySelector('.exercise-footer'));
+    if (!card) return;
+    const ex  = this._cw().exercises[exIdx];
+    const old = card.querySelector('.volume-bar');
+    const nw  = this._buildVolBar(ex, exIdx, 'update');
+    if (old) card.replaceChild(nw, old);
+    else card.insertBefore(nw, card.querySelector('.exercise-footer'));
   },
 
   /* DRAG & DROP – ćwiczenia */
