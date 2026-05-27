@@ -880,6 +880,198 @@ const App = {
     }
   },
 
+  /* ============================================================
+     ĆWICZENIA – baza wg partii mięśniowych
+     ============================================================ */
+
+  // Baza ćwiczeń wg grup mięśniowych
+  _exerciseDB: {
+    'KLATKA PIERSIOWA GÓRA': [
+      'Wyciskanie hantli na ławce skośnej (górna)',
+      'Wyciskanie sztangi na skośnej',
+      'Rozpiętki na skośnej',
+      'Rozpiętki na bramie (ustawienie dolne)',
+      'Pompki ze stopami uniesionymi',
+    ],
+    'KLATKA PIERSIOWA ŚRODEK': [
+      'Wyciskanie sztangi na płaskiej',
+      'Wyciskanie hantli na płaskiej',
+      'Rozpiętki z hantlami na płaskiej',
+      'Rozpiętki na bramie (ustawienie środkowe)',
+      'Pompki klasyczne',
+      'Butterfly (peck deck)',
+    ],
+    'KLATKA PIERSIOWA DÓŁ': [
+      'Wyciskanie na ławce ujemnej',
+      'Rozpiętki na ławce ujemnej',
+      'Rozpiętki na bramie (ustawienie górne)',
+      'Dips (dipy)',
+    ],
+    'PLECY GÓRNE': [
+      'Wiosłowanie sztangą',
+      'Wiosłowanie hantlem jednoręcznie',
+      'Wiosłowanie na wyciągu (seated row)',
+      'Wiosłowanie wąskim chwytem',
+      'Face pull',
+      'Wznosy ramion w tył (rear delt row)',
+    ],
+    'PLECY SZEROKIE': [
+      'Podciąganie na drążku',
+      'Ściąganie drążka (lat pulldown)',
+      'Ściąganie drążka wąskim chwytem',
+      'Martwy ciąg',
+      'Pullover z hantlem',
+    ],
+    'BARK PRZÓD': [
+      'Military press (sztanga)',
+      'Wyciskanie hantli nad głowę',
+      'Wznosy hantli przed siebie',
+      'Wyciskanie Arnolda',
+    ],
+    'BARK BOK': [
+      'Odwodzenie ramion (lateral raise)',
+      'Lateral raise na wyciągu',
+      'Upright row',
+    ],
+    'BARK TYŁ': [
+      'Tylna głowa barku na butterfly',
+      'Wznosy hantli w opadzie tułowia',
+      'Face pull',
+      'Odwodzenie ramion w tył na wyciągu',
+    ],
+    'BICEPS': [
+      'Uginanie ramion ze sztangą',
+      'Uginanie ramion na modlitewniku',
+      'Uginanie ramion z hantlami naprzemiennie',
+      'Uginanie ramion na wyciągu',
+      'Uginanie ramion młotkowe (hammer curl)',
+    ],
+    'TRICEPS': [
+      'Triceps na wyciągu (pushdown)',
+      'Triceps na wyciągu górnym (overhead)',
+      'Wąskie wyciskanie sztangi',
+      'French press',
+      'Dips (dipy)',
+      'Kickback z hantlem',
+    ],
+    'CZWOROGŁOWY UDA': [
+      'Przysiad ze sztangą',
+      'Suwnica (leg press)',
+      'Prostowanie nóg na maszynie',
+      'Hack squat',
+      'Wykroki chodzone',
+      'Wykroki bułgarskie',
+    ],
+    'DWUGŁOWY UDA': [
+      'RDL jednonóż',
+      'RDL obunoż',
+      'Uginanie nóg na maszynie (leżąc)',
+      'Uginanie nóg na maszynie (siedzenie)',
+      'Ball leg curl jednonóż',
+      'Nordic curl',
+    ],
+    'POŚLADKI': [
+      'Hip thrusty',
+      'Hip thrust jednonóż',
+      'Glute bridge',
+      'Suwnica izometryczna obunoż',
+      'Odwodzenie nogi na maszynie',
+      'Cable kickback',
+      'RDL jednonóż',
+    ],
+    'ŁYDKI': [
+      'Seated calf raise',
+      'Wspięcia na palce stojąc',
+      'Wspięcia na palce na suwnicy',
+      'Donkey calf raise',
+    ],
+  },
+
+  _currentExGroup: null,  // aktualnie wybrana grupa
+  _currentExName:  null,  // aktualnie wybrane ćwiczenie
+  _currentExPlan:  null,  // wybrany plan (UBW/LBW/FBW)
+
+  openExercises() {
+    this._show('screen-exercises');
+  },
+
+  openExGroup(group) {
+    this._currentExGroup = group;
+    document.getElementById('ex-list-title').textContent = group;
+    const exercises = this._exerciseDB[group] || [];
+    const body = document.getElementById('ex-list-body');
+    body.innerHTML = '';
+
+    const isUpper = !['CZWOROGŁOWY UDA','DWUGŁOWY UDA','POŚLADKI','ŁYDKI'].includes(group);
+
+    exercises.forEach(exName => {
+      const btn = document.createElement('button');
+      btn.className = `ex-item-btn ex-item-btn--${isUpper ? 'upper' : 'lower'}`;
+      btn.innerHTML = `<span class="ex-item-name">${this._esc(exName)}</span><span class="ex-item-arrow">›</span>`;
+      btn.addEventListener('click', () => this._selectExercise(exName));
+      body.appendChild(btn);
+    });
+
+    this._show('screen-ex-list');
+  },
+
+  _selectExercise(exName) {
+    this._currentExName = exName;
+    document.getElementById('ex-plan-title').textContent = this._esc(exName);
+    document.getElementById('modal-ex-plan').style.display = 'flex';
+  },
+
+  closeExPlanModal(e) {
+    if (e && e.target !== document.getElementById('modal-ex-plan')) return;
+    document.getElementById('modal-ex-plan').style.display = 'none';
+  },
+
+  selectExPlan(plan) {
+    this._currentExPlan = plan;
+    document.getElementById('modal-ex-plan').style.display = 'none';
+    // Otwórz modal daty
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('ex-date-input').value = today;
+    document.getElementById('ex-date-title').textContent = `${this._currentExName}`;
+    document.getElementById('ex-date-desc').textContent =
+      `Plan: ${plan} · Wybierz datę treningu:`;
+    document.getElementById('modal-ex-date').style.display = 'flex';
+  },
+
+  closeExDateModal(e) {
+    if (e && e.target !== document.getElementById('modal-ex-date')) return;
+    document.getElementById('modal-ex-date').style.display = 'none';
+  },
+
+  confirmExDate() {
+    const dk = document.getElementById('ex-date-input').value;
+    if (!dk) { this._toast('Wybierz datę'); return; }
+
+    const plan = this._currentExPlan;
+    const exName = this._currentExName;
+    const ws = this.db.plans[plan].workouts;
+
+    // Utwórz trening jeśli nie istnieje
+    if (!ws[dk]) ws[dk] = { exercises: [] };
+
+    // Dodaj ćwiczenie jeśli jeszcze nie ma
+    const exists = ws[dk].exercises.some(
+      e => e.name.trim().toLowerCase() === exName.trim().toLowerCase()
+    );
+    if (!exists) {
+      ws[dk].exercises.push({ name: exName, superSet: false, sets: [{ reps:'', weight:'', note:'' }] });
+    }
+    DB.save(this.db);
+
+    document.getElementById('modal-ex-date').style.display = 'none';
+    this._toast(`Dodano do ${plan} · ${this._fmt(dk)}`);
+
+    // Przejdź do treningu
+    this.plan = plan;
+    this._renderPlan();
+    this.openWorkout(dk);
+  },
+
   /* TEMPLATES */
   _renderTpls() {
     const tpls=this.db.templates||[];

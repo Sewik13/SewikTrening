@@ -56,6 +56,11 @@
       <div class="plan-card__info"><div class="plan-card__name plan-card__name--tpl">Gotowy plan</div><div class="plan-card__desc">Szablony treningów</div></div>
       <div class="plan-card__arrow">›</div>
     </button>
+    <button class="plan-card plan-card--ex" onclick="App.openExercises()">
+      <div class="plan-card__icon"><img src="icons/icon-exercises.svg" class="plan-card__svg" alt="Ćwiczenia"/></div>
+      <div class="plan-card__info"><div class="plan-card__name plan-card__name--ex">Ćwiczenia</div><div class="plan-card__desc">Baza ćwiczeń wg partii</div></div>
+      <div class="plan-card__arrow">›</div>
+    </button>
   </main>
   <footer class="home-footer">
     <div class="user-bar" id="user-bar">
@@ -98,6 +103,120 @@
     <button class="btn-primary btn-full" onclick="App.addExercise()"><span class="btn-icon">+</span> Dodaj ćwiczenie</button>
   </div>
   <div class="bottom-spacer"></div>
+</div>
+
+<!-- EKRAN ĆWICZENIA – grupy mięśniowe -->
+<div id="screen-exercises" class="screen">
+  <header class="nav-header">
+    <button class="btn-back" onclick="App.goHome()">← Wróć</button>
+    <h2 class="nav-title">Ćwiczenia</h2>
+    <div class="nav-spacer"></div>
+  </header>
+  <div class="ex-groups-body">
+
+    <div class="ex-section-label ex-section-label--upper">GÓRA CIAŁA</div>
+
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('KLATKA PIERSIOWA GÓRA')">
+      <span class="ex-group-name">Klatka piersiowa góra</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('KLATKA PIERSIOWA ŚRODEK')">
+      <span class="ex-group-name">Klatka piersiowa środek</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('KLATKA PIERSIOWA DÓŁ')">
+      <span class="ex-group-name">Klatka piersiowa dół</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('PLECY GÓRNE')">
+      <span class="ex-group-name">Plecy górne</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('PLECY SZEROKIE')">
+      <span class="ex-group-name">Plecy szerokie</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('BARK PRZÓD')">
+      <span class="ex-group-name">Bark przód</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('BARK BOK')">
+      <span class="ex-group-name">Bark bok</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('BARK TYŁ')">
+      <span class="ex-group-name">Bark tył</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('BICEPS')">
+      <span class="ex-group-name">Biceps</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--upper" onclick="App.openExGroup('TRICEPS')">
+      <span class="ex-group-name">Triceps</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+
+    <div class="ex-section-label ex-section-label--lower">DÓŁ CIAŁA</div>
+
+    <button class="ex-group-card ex-group-card--lower" onclick="App.openExGroup('CZWOROGŁOWY UDA')">
+      <span class="ex-group-name">Czworogłowy uda</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--lower" onclick="App.openExGroup('DWUGŁOWY UDA')">
+      <span class="ex-group-name">Dwugłowy uda</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--lower" onclick="App.openExGroup('POŚLADKI')">
+      <span class="ex-group-name">Pośladki</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+    <button class="ex-group-card ex-group-card--lower" onclick="App.openExGroup('ŁYDKI')">
+      <span class="ex-group-name">Łydki</span>
+      <span class="ex-group-arrow">›</span>
+    </button>
+
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- EKRAN ĆWICZENIA – lista ćwiczeń dla grupy -->
+<div id="screen-ex-list" class="screen">
+  <header class="nav-header">
+    <button class="btn-back" onclick="App.openExercises()">← Wróć</button>
+    <h2 class="nav-title" id="ex-list-title"></h2>
+    <div class="nav-spacer"></div>
+  </header>
+  <div id="ex-list-body" class="ex-list-body"></div>
+</div>
+
+<!-- MODAL: wybór planu po kliknięciu ćwiczenia -->
+<div id="modal-ex-plan" class="modal-overlay" style="display:none;" onclick="App.closeExPlanModal(event)">
+  <div class="modal-box">
+    <h3 class="modal-title" id="ex-plan-title">Dodaj ćwiczenie do treningu</h3>
+    <p class="modal-desc">Wybierz plan:</p>
+    <div class="ex-plan-picker">
+      <button class="ex-plan-btn ex-plan-btn--ubw" onclick="App.selectExPlan('UBW')">🏋️ UBW</button>
+      <button class="ex-plan-btn ex-plan-btn--lbw" onclick="App.selectExPlan('LBW')">🦵 LBW</button>
+      <button class="ex-plan-btn ex-plan-btn--fbw" onclick="App.selectExPlan('FBW')">🔥 FBW</button>
+    </div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn-secondary" onclick="App.closeExPlanModal()">Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: wybór daty po wybraniu planu (ćwiczenia) -->
+<div id="modal-ex-date" class="modal-overlay" style="display:none;" onclick="App.closeExDateModal(event)">
+  <div class="modal-box">
+    <h3 class="modal-title" id="ex-date-title">Nowy trening</h3>
+    <p class="modal-desc" id="ex-date-desc"></p>
+    <input type="date" id="ex-date-input" class="date-input"/>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="App.closeExDateModal()">Anuluj</button>
+      <button class="btn-primary" onclick="App.confirmExDate()">Dodaj</button>
+    </div>
+  </div>
 </div>
 
 <!-- EKRAN SZABLONÓW -->

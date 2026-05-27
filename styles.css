@@ -583,3 +583,118 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   width: 16px; height: 16px; object-fit: contain;
   vertical-align: middle; display: inline-block; flex-shrink: 0;
 }
+
+/* ── ĆWICZENIA – kafelek na home ────────────────────────── */
+.plan-card--ex .plan-card__name--ex { color: #32D74B; }
+
+/* ── EKRAN GRUP MIĘŚNIOWYCH ─────────────────────────────── */
+.ex-groups-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 0;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.ex-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 4px 4px;
+  margin-top: 4px;
+}
+.ex-section-label--upper { color: var(--orange); }
+.ex-section-label--lower { color: var(--accent); }
+
+.ex-group-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px;
+  border-radius: var(--r-md);
+  border: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  transition: opacity .12s, transform .12s;
+}
+.ex-group-card:active { opacity: .75; transform: scale(.98); }
+
+.ex-group-card--upper {
+  background: rgba(255,159,10,.12);
+  color: var(--orange);
+  border: 1px solid rgba(255,159,10,.25);
+}
+.ex-group-card--lower {
+  background: rgba(10,132,255,.12);
+  color: var(--accent);
+  border: 1px solid rgba(10,132,255,.25);
+}
+
+.ex-group-name { flex: 1; }
+.ex-group-arrow { font-size: 18px; opacity: .6; }
+
+/* ── EKRAN LISTY ĆWICZEŃ ────────────────────────────────── */
+.ex-list-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px 14px;
+  overflow-y: auto;
+}
+
+.ex-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px;
+  border-radius: var(--r-md);
+  border: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  transition: opacity .12s, transform .12s;
+  background: var(--surf);
+  border: 1px solid var(--border);
+}
+.ex-item-btn:active { opacity: .75; transform: scale(.98); }
+
+.ex-item-btn--upper { border-left: 3px solid var(--orange); }
+.ex-item-btn--lower { border-left: 3px solid var(--accent); }
+
+.ex-item-name { flex: 1; color: var(--text); }
+.ex-item-arrow { font-size: 18px; color: var(--muted); }
+
+/* ── MODAL: wybór planu ─────────────────────────────────── */
+.ex-plan-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 9px;
+  margin-bottom: 4px;
+}
+.ex-plan-btn {
+  padding: 13px 4px;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--border);
+  background: var(--surf);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-appearance: none;
+  transition: all .13s;
+  text-align: center;
+}
+.ex-plan-btn:active { opacity: .75; }
+.ex-plan-btn--ubw { color: var(--ubw); border-color: rgba(10,132,255,.35); background: rgba(10,132,255,.10); }
+.ex-plan-btn--lbw { color: var(--lbw); border-color: rgba(48,209,88,.35);  background: rgba(48,209,88,.10);  }
+.ex-plan-btn--fbw { color: var(--fbw); border-color: rgba(255,159,10,.35); background: rgba(255,159,10,.10); }
