@@ -717,7 +717,7 @@ const App = {
     const volBadge = badgeVol
       ? `<span class="rec-badge rec-badge--vol">
            <img src="icons/icon-vol.svg" class="rec-icon" alt="Rekord objętości"/>
-           OBJĘTOŚĆ
+           OBJ
          </span>` : '';
 
     // Badge PR – rekord ciężaru w serii
