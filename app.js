@@ -662,18 +662,19 @@ const App = {
     const {total,detail,hasData}=this._calcVol(sets);
     const bar=document.createElement('div'); bar.className='volume-bar';
     if (!hasData) {
-      bar.innerHTML=`<div class="vol-header"><span class="vol-label">OBJĘTOŚĆ</span><span class="vol-empty-txt">Wpisz dane</span></div>`;
+      bar.innerHTML=`<div class="vol-header"><span class="vol-label"><img src="icons/icon-vol.svg" class="vol-icon" alt="Objętość"/></span><span class="vol-empty-txt">Wpisz dane</span></div>`;
       return bar;
     }
     const {prVol,prW}=this._updateRec(ex.name, sets, mode);
-    const volBadge=prVol?'<span class="pr-badge">🚀 PR</span>':'';
-    const wBadge=prW?'<span class="pr-badge pr-badge--w">🚀 CIĘŻAR</span>':'';
+    const volBadge = prVol ? '<span class="pr-badge"><img src="icons/icon-pr.svg" class="pr-icon" alt="PR"/> PR VOL</span>' : '';
+    const wBadge   = prW   ? '<span class="pr-badge pr-badge--w"><img src="icons/icon-pr.svg" class="pr-icon" alt="PR"/> PR KG</span>' : '';
     const rowsHTML=detail.map((d,i)=>{
       if(d.r===0&&d.w===0) return `<div class="vol-row"><span class="vol-row-num">${i+1}</span><span class="vol-row-empty">—</span></div>`;
       const res=d.v>0?`= <strong>${d.v.toLocaleString('pl-PL')} kg</strong>`:'= —';
       return `<div class="vol-row"><span class="vol-row-num">${i+1}</span><span class="vol-row-calc">${d.r} × ${d.w} kg ${res}</span></div>`;
     }).join('');
-    bar.innerHTML=`<div class="vol-header"><span class="vol-label">OBJĘTOŚĆ</span>
+    bar.innerHTML=`<div class="vol-header">
+      <span class="vol-label"><img src="icons/icon-vol.svg" class="vol-icon" alt="Objętość"/></span>
       <span class="vol-total">${total.toLocaleString('pl-PL')} kg ${volBadge}${wBadge}</span></div>
       <div class="vol-rows">${rowsHTML}</div>`;
     return bar;

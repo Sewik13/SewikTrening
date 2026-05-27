@@ -534,3 +534,41 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   border-top: 1px solid var(--border);
   margin-top: 3px;
 }
+
+/* ── CUSTOM SVG ICONS ───────────────────────────────────── */
+
+/* Logo na ekranie głównym */
+.header-logo-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 10px;
+}
+
+/* Ikony na kafelkach planów */
+.plan-card__svg {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Ikonka objętości (zastępuje tekst "OBJĘTOŚĆ") */
+.vol-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+/* Ikonka PR w badge */
+.pr-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+  display: inline-block;
+  margin-right: 2px;
+}

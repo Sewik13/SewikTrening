@@ -3,7 +3,7 @@
  * Zmień CACHE_NAME przy każdej aktualizacji – wymusza pobranie nowych plików.
  */
 
-const CACHE_NAME = 'trening-pwa-v9'; // <-- zmieniona wersja = stary cache usunięty
+const CACHE_NAME = 'trening-pwa-v10'; // <-- zmieniona wersja = stary cache usunięty
 
 const ASSETS = [
   './',
@@ -12,7 +12,14 @@ const ASSETS = [
   './app.js',
   './manifest.json',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './icons/icon-home.svg',
+  './icons/icon-ubw.svg',
+  './icons/icon-lbw.svg',
+  './icons/icon-fbw.svg',
+  './icons/icon-plan.svg',
+  './icons/icon-vol.svg',
+  './icons/icon-pr.svg'
 ];
 
 self.addEventListener('install', e => {
