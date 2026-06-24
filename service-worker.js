@@ -3,7 +3,7 @@
  * Zmień CACHE_NAME przy każdej aktualizacji – wymusza pobranie nowych plików.
  */
 
-const CACHE_NAME = 'trening-pwa-v13'; // <-- zmieniona wersja = stary cache usunięty
+const CACHE_NAME = 'trening-pwa-v17'; // <-- zmieniona wersja = stary cache usunięty
 
 const ASSETS = [
   './',

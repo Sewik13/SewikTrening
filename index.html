@@ -61,6 +61,11 @@
       <div class="plan-card__info"><div class="plan-card__name plan-card__name--ex">Ćwiczenia</div><div class="plan-card__desc">Baza ćwiczeń wg partii</div></div>
       <div class="plan-card__arrow">›</div>
     </button>
+    <button class="plan-card plan-card--stimuli" onclick="App.openStimuli()">
+      <div class="plan-card__icon">📊</div>
+      <div class="plan-card__info"><div class="plan-card__name plan-card__name--stimuli">Bodźce</div><div class="plan-card__desc">Tygodniowy wolumen mięśni</div></div>
+      <div class="plan-card__arrow">›</div>
+    </button>
   </main>
   <footer class="home-footer">
     <div class="user-bar" id="user-bar">
@@ -103,6 +108,36 @@
     <button class="btn-primary btn-full" onclick="App.addExercise()"><span class="btn-icon">+</span> Dodaj ćwiczenie</button>
   </div>
   <div class="bottom-spacer"></div>
+</div>
+
+<!-- EKRAN BODŹCE – lista tygodni -->
+<div id="screen-stimuli" class="screen">
+  <header class="nav-header">
+    <button class="btn-back" onclick="App.goHome()">← Wróć</button>
+    <h2 class="nav-title">Bodźce</h2>
+    <div class="nav-spacer"></div>
+  </header>
+  <div id="stimuli-weeks-body" class="stimuli-weeks-body"></div>
+</div>
+
+<!-- EKRAN BODŹCE – szczegóły tygodnia -->
+<div id="screen-stimuli-week" class="screen">
+  <header class="nav-header">
+    <button class="btn-back" onclick="App.openStimuli()">← Wróć</button>
+    <h2 class="nav-title" id="stimuli-week-title"></h2>
+    <div class="nav-spacer"></div>
+  </header>
+  <div id="stimuli-week-body" class="stimuli-week-body"></div>
+</div>
+
+<!-- EKRAN BODŹCE – szczegóły partii -->
+<div id="screen-stimuli-muscle" class="screen">
+  <header class="nav-header">
+    <button class="btn-back" onclick="App._showStimuliWeekBack()">← Wróć</button>
+    <h2 class="nav-title" id="stimuli-muscle-title"></h2>
+    <div class="nav-spacer"></div>
+  </header>
+  <div id="stimuli-muscle-body" class="stimuli-muscle-body"></div>
 </div>
 
 <!-- EKRAN ĆWICZENIA – grupy mięśniowe -->

@@ -27,19 +27,124 @@ const provider   = new GoogleAuthProvider();
 /* ── PREDEFINIOWANE SZABLONY ─────────────────────────────── */
 const BUILTIN = [
   { id:'builtin_lbw', name:'LBW – Trening nóg', planType:'LBW', builtin:true, exercises:[
-    {name:'Wykroki chodzone',sets:3},{name:'Hip thrusty',sets:3},{name:'Ball leg curl jednonóż',sets:2},
-    {name:'Suwnica izometryczna obunoż',sets:3},{name:'Uginanie nóg na maszynie',sets:3},{name:'Seated calf raise',sets:3}]},
+    {name:'Front squat',sets:3},
+    {name:'Hip thrusty',sets:3},
+    {name:'Ball leg curl jednonóż',sets:2},
+    {name:'Suwnica izometryczna obunoż',sets:3},
+    {name:'Uginanie nóg na maszynie',sets:3},
+    {name:'Seated calf raise',sets:3},
+    {name:'Odwodzenie nóg na maszynie',sets:3},
+  ]},
   { id:'builtin_ubw', name:'UBW – Trening górny', planType:'UBW', builtin:true, exercises:[
-    {name:'Wyciskanie sztangi na ławce płaskiej',sets:3},{name:'Podciąganie',sets:3},
-    {name:'Military press',sets:3},{name:'Wiosłowanie na wyciągu (seated row)',sets:3},
-    {name:'Rozpiętki na bramie',sets:3},{name:'Triceps na wyciągu',sets:3},
-    {name:'Uginanie ramion na modlitewniku',sets:3}]},
+    {name:'Wyciskanie sztangi na ławce płaskiej',sets:4},
+    {name:'Podciąganie',sets:3},
+    {name:'Military press',sets:3},
+    {name:'Wiosłowanie na wyciągu (seated row)',sets:4},
+    {name:'Rozpiętki na bramie',sets:4},
+    {name:'Lateral raise na wyciągu',sets:4},
+    {name:'Triceps na wyciągu',sets:3},
+    {name:'Uginanie ramion na modlitewniku',sets:3},
+  ]},
   { id:'builtin_fbw', name:'FBW – Full Body', planType:'FBW', builtin:true, exercises:[
-    {name:'Wyciskanie hantli na ławce skośnej',sets:3},{name:'Ściąganie drążka',sets:3},
-    {name:'Odwodzenie ramion (lateral raise)',sets:3},{name:'Tylna głowa barku na butterfly',sets:3},
-    {name:'Triceps na wyciągu górnym',sets:3},{name:'Prostowanie nóg na maszynie',sets:3},
-    {name:'Wspięcia na palce stojąc',sets:3},{name:'RDL jednonóż',sets:3}]},
+    {name:'Wyciskanie hantli na ławce skośnej',sets:4},
+    {name:'Ściąganie drążka',sets:3},
+    {name:'Tylna głowa barku na butterfly',sets:4},
+    {name:'Triceps na wyciągu górnym',sets:3},
+    {name:'Uginanie ramion skośne (incline curl)',sets:3},
+    {name:'Odwodzenie ramion (lateral raise)',sets:4},
+    {name:'Prostowanie nóg na maszynie',sets:3},
+    {name:'Wspięcia na palce stojąc',sets:3},
+    {name:'RDL jednonóż',sets:2},
+  ]},
 ];
+
+/* ── MAPA MIĘŚNIOWA ──────────────────────────────────────
+   Dla każdego ćwiczenia: partie główne (1.0) i pomocnicze (0.5)
+   ─────────────────────────────────────────────────────── */
+const MUSCLE_MAP = {
+  // UBW
+  'wyciskanie sztangi na ławce płaskiej':  {'Klatka środek':1,'Triceps':1,'Bark przód':0.5,'Brzuch':0.5},
+  'podciąganie':                           {'Plecy szerokie':1,'Biceps':1,'Bark tył':0.5,'Brzuch':0.5},
+  'military press':                        {'Bark przód':1,'Triceps':1,'Bark bok':0.5,'Brzuch':0.5},
+  'wiosłowanie na wyciągu (seated row)':   {'Plecy górne':1,'Biceps':0.5,'Bark tył':0.5},
+  'rozpiętki na bramie':                   {'Klatka środek':1,'Bark przód':0.5},
+  'lateral raise na wyciągu':             {'Bark bok':1},
+  'triceps na wyciągu':                    {'Triceps':1},
+  'uginanie ramion na modlitewniku':       {'Biceps':1},
+  // FBW
+  'wyciskanie hantli na ławce skośnej':    {'Klatka góra':1,'Triceps':1,'Bark przód':0.5,'Brzuch':0.5},
+  'ściąganie drążka':                      {'Plecy szerokie':1,'Biceps':0.5,'Bark tył':0.5},
+  'tylna głowa barku na butterfly':        {'Bark tył':1,'Plecy górne':0.5},
+  'triceps na wyciągu górnym':             {'Triceps':1},
+  'uginanie ramion skośne (incline curl)': {'Biceps':1},
+  'odwodzenie ramion (lateral raise)':     {'Bark bok':1},
+  'prostowanie nóg na maszynie':           {'Czworogłowy':1},
+  'wspięcia na palce stojąc':              {'Łydki':1},
+  'rdl jednonóż':                          {'Dwugłowy uda':1,'Pośladki':0.5,'Brzuch':0.5},
+  // LBW
+  'front squat':                           {'Czworogłowy':1,'Pośladki':0.5,'Brzuch':1},
+  'hip thrusty':                           {'Pośladki':1,'Dwugłowy uda':0.5},
+  'ball leg curl jednonóż':                {'Dwugłowy uda':1,'Pośladki':0.5},
+  'suwnica izometryczna obunoż':           {'Czworogłowy':1,'Pośladki':0.5},
+  'uginanie nóg na maszynie':              {'Dwugłowy uda':1},
+  'seated calf raise':                     {'Łydki':1},
+  'odwodzenie nóg na maszynie':            {'Pośladki':1},
+  // Baza ćwiczeń – dodatkowe
+  'rozpiętki na bramie (ustawienie dolne — wyciągi nisko)': {'Klatka góra':1,'Bark przód':0.5},
+  'rozpiętki na bramie (ustawienie środkowe)':              {'Klatka środek':1,'Bark przód':0.5},
+  'rozpiętki na bramie (ustawienie górne — wyciągi wysoko)':{'Klatka dół':1,'Bark przód':0.5},
+  'wyciskanie hantli na ławce skośnej (górna)':  {'Klatka góra':1,'Triceps':1,'Bark przód':0.5},
+  'wyciskanie sztangi na skośnej':               {'Klatka góra':1,'Triceps':1,'Bark przód':0.5},
+  'rozpiętki na skośnej':                        {'Klatka góra':1,'Bark przód':0.5},
+  'wyciskanie hantli na płaskiej':               {'Klatka środek':1,'Triceps':1,'Bark przód':0.5},
+  'rozpiętki z hantlami na płaskiej':            {'Klatka środek':1,'Bark przód':0.5},
+  'butterfly (peck deck)':                       {'Klatka środek':1},
+  'wyciskanie na ławce ujemnej':                 {'Klatka dół':1,'Triceps':1,'Bark przód':0.5},
+  'rozpiętki na ławce ujemnej':                  {'Klatka dół':1},
+  'dips (dipy)':                                 {'Klatka dół':1,'Triceps':1,'Bark przód':0.5},
+  'wiosłowanie sztangą':           {'Plecy górne':1,'Biceps':0.5,'Bark tył':0.5},
+  'wiosłowanie hantlem jednoręcznie':{'Plecy górne':1,'Biceps':0.5,'Bark tył':0.5},
+  'wiosłowanie wąskim chwytem':    {'Plecy górne':1,'Biceps':0.5,'Bark tył':0.5},
+  'face pull':                     {'Bark tył':1,'Plecy górne':0.5},
+  'wznosy ramion w tył (rear delt row)': {'Bark tył':1,'Plecy górne':0.5},
+  'ściąganie drążka wąskim chwytem':{'Plecy szerokie':1,'Biceps':0.5},
+  'martwy ciąg':                   {'Plecy górne':1,'Dwugłowy uda':1,'Pośladki':0.5,'Brzuch':0.5},
+  'pullover z hantlem':            {'Plecy szerokie':1,'Klatka środek':0.5},
+  'wyciskanie hantli nad głowę':   {'Bark przód':1,'Triceps':1,'Bark bok':0.5},
+  'wznosy hantli przed siebie':    {'Bark przód':1},
+  'wyciskanie arnolda':            {'Bark przód':1,'Bark bok':0.5,'Triceps':1},
+  'upright row':                   {'Bark bok':1,'Bark przód':0.5,'Plecy górne':0.5},
+  'wznosy hantli w opadzie tułowia': {'Bark tył':1,'Plecy górne':0.5},
+  'odwodzenie ramion w tył na wyciągu': {'Bark tył':1},
+  'uginanie ramion ze sztangą':    {'Biceps':1},
+  'uginanie ramion z hantlami naprzemiennie': {'Biceps':1},
+  'uginanie ramion na wyciągu':    {'Biceps':1},
+  'uginanie ramion młotkowe (hammer curl)': {'Biceps':1},
+  'triceps na wyciągu (pushdown)': {'Triceps':1},
+  'wąskie wyciskanie sztangi':     {'Triceps':1,'Klatka środek':0.5,'Bark przód':0.5},
+  'french press':                  {'Triceps':1},
+  'kickback z hantlem':            {'Triceps':1},
+  'przysiad ze sztangą':           {'Czworogłowy':1,'Pośladki':0.5,'Brzuch':0.5},
+  'suwnica (leg press)':           {'Czworogłowy':1,'Pośladki':0.5},
+  'hack squat':                    {'Czworogłowy':1,'Pośladki':0.5,'Brzuch':0.5},
+  'wykroki chodzone':              {'Czworogłowy':1,'Pośladki':0.5},
+  'wykroki bułgarskie':            {'Czworogłowy':1,'Pośladki':1,'Brzuch':0.5},
+  'rdl obunoż':                    {'Dwugłowy uda':1,'Pośladki':0.5,'Brzuch':0.5},
+  'uginanie nóg na maszynie (leżąc)':   {'Dwugłowy uda':1},
+  'uginanie nóg na maszynie (siedzenie)':{'Dwugłowy uda':1},
+  'nordic curl':                   {'Dwugłowy uda':1,'Brzuch':0.5},
+  'hip thrust jednonóż':           {'Pośladki':1,'Dwugłowy uda':0.5},
+  'glute bridge':                  {'Pośladki':1,'Dwugłowy uda':0.5},
+  'cable kickback':                {'Pośladki':1},
+  'odwodzenie nogi na maszynie':   {'Pośladki':1},
+  'donkey calf raise':             {'Łydki':1},
+  'wspięcia na palce na suwnicy':  {'Łydki':1},
+};
+
+/* Zwraca mapę mięśniową dla ćwiczenia (case-insensitive) */
+function getMuscles(exName) {
+  return MUSCLE_MAP[(exName||'').trim().toLowerCase()] || null;
+}
 
 /* ── DOMYŚLNA STRUKTURA BAZY ─────────────────────────────── */
 function defaultDB() {
@@ -182,12 +287,25 @@ const App = {
 
   _injectBuiltins() {
     if (!this.db) return;
-    const ids = new Set(this.db.templates.map(t=>t.id));
-    let ch = false;
-    [...BUILTIN].reverse().forEach(t => {
-      if (!ids.has(t.id)) { this.db.templates.unshift({...t}); ch=true; }
+    let changed = false;
+    BUILTIN.forEach(tpl => {
+      const idx = this.db.templates.findIndex(t => t.id === tpl.id);
+      if (idx === -1) {
+        // Nie ma — dodaj na początku
+        this.db.templates.unshift({...tpl});
+        changed = true;
+      } else {
+        // Jest — zaktualizuj ćwiczenia (zachowaj id i builtin flag)
+        const existing = this.db.templates[idx];
+        const exercisesChanged = JSON.stringify(existing.exercises) !== JSON.stringify(tpl.exercises);
+        const nameChanged = existing.name !== tpl.name;
+        if (exercisesChanged || nameChanged) {
+          this.db.templates[idx] = { ...tpl };
+          changed = true;
+        }
+      }
     });
-    if (ch) DB.save(this.db);
+    if (changed) DB.save(this.db);
   },
 
   /**
@@ -881,6 +999,242 @@ const App = {
   },
 
   /* ============================================================
+     BODŹCE – tygodniowy wolumen mięśni
+     ============================================================ */
+
+  _currentWeekKey: null, // 'YYYY-Www' ISO week key
+
+  openStimuli() {
+    this._renderStimuliWeeks();
+    this._show('screen-stimuli');
+  },
+
+  _showStimuliWeekBack() {
+    this._show('screen-stimuli-week');
+  },
+
+  /** Zwraca ISO-week key: YYYY-Www */
+  _isoWeekKey(dateStr) {
+    const d = new Date(dateStr);
+    const tmp = new Date(d);
+    tmp.setHours(0,0,0,0);
+    tmp.setDate(tmp.getDate() + 3 - (tmp.getDay()||7) + 1);
+    const week1 = new Date(tmp.getFullYear(), 0, 4);
+    const wn = 1 + Math.round(((tmp - week1) / 86400000 - 3 + (week1.getDay()||7)) / 7);
+    return `${tmp.getFullYear()}-W${String(wn).padStart(2,'0')}`;
+  },
+
+  /** Zwraca pon i ndz dla tygodnia z danej daty */
+  _weekBounds(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = d.getDay() || 7; // 1=pon, 7=ndz
+    const mon = new Date(d); mon.setDate(d.getDate() - day + 1);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return { mon, sun };
+  },
+
+  /** Formatuje datę jako DD.MM */
+  _fmtShort(date) {
+    return String(date.getDate()).padStart(2,'0') + '.' + String(date.getMonth()+1).padStart(2,'0');
+  },
+
+  /**
+   * Oblicza bodźce dla wszystkich tygodni.
+   * Zwraca Map: weekKey → { label, mon, sun, muscles: {muscleName → {sets, exercises:[{name,sets,type}]}} }
+   */
+  _calcAllStimuli() {
+    const weeks = new Map();
+
+    ['UBW','LBW','FBW'].forEach(plan => {
+      const workouts = this.db.plans[plan].workouts || {};
+      Object.entries(workouts).forEach(([dateKey, workout]) => {
+        const wk = this._isoWeekKey(dateKey);
+        if (!weeks.has(wk)) {
+          const { mon, sun } = this._weekBounds(dateKey);
+          weeks.set(wk, {
+            key: wk,
+            label: `${this._fmtShort(mon)} – ${this._fmtShort(sun)}.${sun.getFullYear()}`,
+            mon, sun,
+            muscles: {}
+          });
+        }
+        const week = weeks.get(wk);
+
+        (workout.exercises || []).forEach(ex => {
+          const muscles = getMuscles(ex.name);
+          if (!muscles) return;
+          const setCount = (ex.sets || []).length;
+
+          Object.entries(muscles).forEach(([muscle, factor]) => {
+            if (!week.muscles[muscle]) week.muscles[muscle] = { sets: 0, exercises: [] };
+            const contribution = setCount * factor;
+            week.muscles[muscle].sets += contribution;
+            week.muscles[muscle].exercises.push({
+              name: ex.name,
+              sets: setCount,
+              factor,
+              contribution,
+              plan,
+              date: dateKey
+            });
+          });
+        });
+      });
+    });
+
+    // Posortuj tygodnie malejąco (najnowszy pierwszy)
+    return new Map([...weeks.entries()].sort((a,b) => b[0].localeCompare(a[0])));
+  },
+
+  _renderStimuliWeeks() {
+    const weeks = this._calcAllStimuli();
+    const body = document.getElementById('stimuli-weeks-body');
+    body.innerHTML = '';
+
+    if (weeks.size === 0) {
+      body.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><p>Brak danych treningowych.</p></div>`;
+      return;
+    }
+
+    weeks.forEach((week, wk) => {
+      const totalSets = Object.values(week.muscles).reduce((s,m) => s + m.sets, 0);
+      const muscleCount = Object.keys(week.muscles).length;
+
+      const card = document.createElement('button');
+      card.className = 'stimuli-week-card';
+      card.innerHTML = `
+        <div class="stimuli-week-info">
+          <div class="stimuli-week-label">${week.label}</div>
+          <div class="stimuli-week-meta">${muscleCount} partii · ${totalSets.toFixed(1)} serii łącznie</div>
+        </div>
+        <div class="stimuli-week-arrow">›</div>`;
+      card.addEventListener('click', () => this._openStimuliWeek(wk, weeks.get(wk)));
+      body.appendChild(card);
+    });
+  },
+
+  _openStimuliWeek(wk, week) {
+    this._currentWeekKey = wk;
+    document.getElementById('stimuli-week-title').textContent = week.label;
+
+    const body = document.getElementById('stimuli-week-body');
+    body.innerHTML = '';
+
+    // Kolejność partii
+    const ORDER = [
+      'Klatka góra','Klatka środek','Klatka dół',
+      'Plecy górne','Plecy szerokie',
+      'Bark przód','Bark bok','Bark tył',
+      'Biceps','Triceps',
+      'Czworogłowy','Dwugłowy uda','Pośladki','Łydki','Brzuch'
+    ];
+
+    // Rekomendacje serii tygodniowych (dla redukcji)
+    const REC = {
+      'Klatka góra':10,'Klatka środek':10,'Klatka dół':6,
+      'Plecy górne':10,'Plecy szerokie':10,
+      'Bark przód':6,'Bark bok':8,'Bark tył':8,
+      'Biceps':6,'Triceps':6,
+      'Czworogłowy':8,'Dwugłowy uda':8,'Pośladki':10,'Łydki':4,'Brzuch':4
+    };
+
+    const isUpper = ['Klatka góra','Klatka środek','Klatka dół','Plecy górne','Plecy szerokie','Bark przód','Bark bok','Bark tył','Biceps','Triceps'];
+
+    // Sekcje
+    let lastSection = null;
+    ORDER.forEach(muscle => {
+      const data = week.muscles[muscle];
+      const sets = data ? data.sets : 0;
+      const rec  = REC[muscle] || 8;
+      const pct  = Math.min(sets / rec, 1);
+      const section = isUpper.includes(muscle) ? 'GÓRA' : 'DÓŁ';
+
+      if (section !== lastSection) {
+        const lbl = document.createElement('div');
+        lbl.className = `stimuli-section-label stimuli-section-label--${section === 'GÓRA' ? 'upper' : 'lower'}`;
+        lbl.textContent = section === 'GÓRA' ? 'GÓRA CIAŁA' : 'DÓŁ CIAŁA';
+        body.appendChild(lbl);
+        lastSection = section;
+      }
+
+      const row = document.createElement('button');
+      row.className = 'stimuli-muscle-row';
+      row.disabled = sets === 0;
+
+      // Kolor paska
+      let barColor = '#FF453A'; // czerwony < 50%
+      if (pct >= 1)   barColor = '#30D158'; // zielony = 100%
+      else if (pct >= 0.5) barColor = '#FF9F0A'; // pomarańczowy 50-99%
+
+      row.innerHTML = `
+        <div class="stimuli-muscle-name">${muscle}</div>
+        <div class="stimuli-muscle-right">
+          <div class="stimuli-bar-wrap">
+            <div class="stimuli-bar" style="width:${(pct*100).toFixed(0)}%;background:${barColor};"></div>
+          </div>
+          <div class="stimuli-sets-num" style="color:${barColor};">${sets > 0 ? sets.toFixed(1) : '0'}</div>
+          <div class="stimuli-rec">/ ${rec}</div>
+          <div class="stimuli-arrow">${sets > 0 ? '›' : ''}</div>
+        </div>`;
+
+      if (sets > 0) {
+        row.addEventListener('click', () => this._openStimuliMuscle(muscle, data, week.label));
+      }
+      body.appendChild(row);
+    });
+
+    const note = document.createElement('div');
+    note.className = 'stimuli-note';
+    note.textContent = 'Liczby po prawej: Twoje serie / rekomendacja tygodniowa (redukcja)';
+    body.appendChild(note);
+
+    this._show('screen-stimuli-week');
+  },
+
+  _openStimuliMuscle(muscle, data, weekLabel) {
+    document.getElementById('stimuli-muscle-title').textContent = muscle;
+    const body = document.getElementById('stimuli-muscle-body');
+    body.innerHTML = '';
+
+    const header = document.createElement('div');
+    header.className = 'stimuli-muscle-header';
+    header.innerHTML = `<span class="stimuli-muscle-week">${weekLabel}</span>
+      <span class="stimuli-muscle-total">${data.sets.toFixed(1)} serii łącznie</span>`;
+    body.appendChild(header);
+
+    // Grupuj po ćwiczeniu
+    const byEx = {};
+    data.exercises.forEach(e => {
+      const k = e.name;
+      if (!byEx[k]) byEx[k] = { name:e.name, contribution:0, sets:e.sets, factor:e.factor, dates:[] };
+      byEx[k].contribution += e.contribution;
+      byEx[k].dates.push({ plan:e.plan, date:e.date });
+    });
+
+    Object.values(byEx).forEach(ex => {
+      const typeLabel = ex.factor === 1 ? 'główna' : 'pomocnicza';
+      const typeClass = ex.factor === 1 ? 'type--main' : 'type--aux';
+      const card = document.createElement('div');
+      card.className = 'stimuli-ex-card';
+      const datesHTML = ex.dates.map(d =>
+        `<span class="stimuli-ex-date">${d.plan} · ${this._fmt(d.date)}</span>`
+      ).join('');
+      card.innerHTML = `
+        <div class="stimuli-ex-top">
+          <span class="stimuli-ex-name">${this._esc(ex.name)}</span>
+          <span class="stimuli-ex-type ${typeClass}">${typeLabel}</span>
+        </div>
+        <div class="stimuli-ex-detail">
+          ${ex.sets} serii × ${ex.factor} = <strong>${ex.contribution.toFixed(1)}</strong> serii efektywnych
+        </div>
+        <div class="stimuli-ex-dates">${datesHTML}</div>`;
+      body.appendChild(card);
+    });
+
+    this._show('screen-stimuli-muscle');
+  },
+
+  /* ============================================================
      ĆWICZENIA – baza wg partii mięśniowych
      ============================================================ */
 
@@ -890,7 +1244,7 @@ const App = {
       'Wyciskanie hantli na ławce skośnej (górna)',
       'Wyciskanie sztangi na skośnej',
       'Rozpiętki na skośnej',
-      'Rozpiętki na bramie (ustawienie dolne)',
+      'Rozpiętki na bramie (ustawienie dolne — wyciągi nisko)',
       'Pompki ze stopami uniesionymi',
     ],
     'KLATKA PIERSIOWA ŚRODEK': [
@@ -904,7 +1258,7 @@ const App = {
     'KLATKA PIERSIOWA DÓŁ': [
       'Wyciskanie na ławce ujemnej',
       'Rozpiętki na ławce ujemnej',
-      'Rozpiętki na bramie (ustawienie górne)',
+      'Rozpiętki na bramie (ustawienie górne — wyciągi wysoko)',
       'Dips (dipy)',
     ],
     'PLECY GÓRNE': [
